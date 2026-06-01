@@ -22,3 +22,9 @@ services:
     App\Controller\UploadController:
         arguments:
             $uploadDir: '%kernel.project_dir%/public/images'
+
+
+    App\Service\MailerService:
+    arguments:
+        $from: '%env(MAILER_SENDER_EMAIL)%'
+        $fromName: '%env(MAILER_SENDER_NAME)%'

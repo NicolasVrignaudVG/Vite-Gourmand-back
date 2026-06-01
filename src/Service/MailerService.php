@@ -11,8 +11,8 @@ class MailerService
 {
     public function __construct(
         private MailerInterface $mailer,
-        private string $from    = 'noreply@vitegourmand.fr',
-        private string $fromName = 'Vite & Gourmand',
+        private string $from    = 'vite.gourmandbordeaux@gmail.com',
+        private string $fromName = 'Vite et Gourmand',
     ) {}
 
     private function email(): Email

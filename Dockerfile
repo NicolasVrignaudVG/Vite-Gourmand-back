@@ -15,31 +15,34 @@ WORKDIR /var/www/html
 
 COPY . .
 
-# .env minimal pour le build
-RUN echo "APP_ENV=prod\nAPP_SECRET=placeholder\nDATABASE_URL=mysql://root:pass@localhost:3306/vite?serverVersion=8.0\nJWT_SECRET_KEY=/var/www/html/config/jwt/private.pem\nJWT_PUBLIC_KEY=/var/www/html/config/jwt/public.pem\nJWT_PASSPHRASE=" > .env
+# .env minimal pour le build — les vraies valeurs viennent des variables Render
+RUN printf "APP_ENV=prod\nAPP_SECRET=placeholder\nDATABASE_URL=mysql://root:pass@localhost:3306/vite?serverVersion=8.0\nJWT_SECRET_KEY=/etc/secrets/private\nJWT_PUBLIC_KEY=/etc/secrets/public\nJWT_PASSPHRASE=\n" > .env
 
+# Installer sans scripts (évite cache:clear pendant le build)
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs --no-scripts
 
-RUN mkdir -p var/cache var/log config/jwt && chmod -R 777 var/
+# Préparer les dossiers
+RUN mkdir -p var/cache/prod var/log config/jwt && chmod -R 777 var/
 
-RUN echo '<VirtualHost *:80>\n\
+# Configuration Apache
+RUN printf '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
     <Directory /var/www/html/public>\n\
         AllowOverride All\n\
         Require all granted\n\
         FallbackResource /index.php\n\
     </Directory>\n\
-</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
+</VirtualHost>\n' > /etc/apache2/sites-available/000-default.conf
 
 RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
 
-# Copier les clés JWT depuis /etc/secrets vers config/jwt/ et lancer Apache
+# Au démarrage : vider le cache et le reconstruire avec les vraies variables Render
 CMD bash -c "\
-    cp /etc/secrets/private /var/www/html/config/jwt/private.pem 2>/dev/null || true && \
-    cp /etc/secrets/public  /var/www/html/config/jwt/public.pem  2>/dev/null || true && \
-    chmod 644 /var/www/html/config/jwt/*.pem 2>/dev/null || true && \
-    chown www-data:www-data /var/www/html/config/jwt/*.pem 2>/dev/null || true && \
-    php bin/console cache:clear --env=prod --no-debug 2>/dev/null || true && \
+    rm -rf /var/www/html/var/cache/prod && \
+    mkdir -p /var/www/html/var/cache/prod && \
+    chmod -R 777 /var/www/html/var && \
+    chown -R www-data:www-data /var/www/html/var && \
+    su www-data -s /bin/bash -c 'php /var/www/html/bin/console cache:warmup --env=prod --no-debug' 2>&1 || true && \
     apache2-foreground"

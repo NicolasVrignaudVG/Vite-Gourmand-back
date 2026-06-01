@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Commande;
+use App\Entity\CommandePlat;
+use App\Entity\Plat;
 use App\Entity\SuiviCommande;
 use App\Repository\CommandeRepository;
 use App\Repository\MenuRepository;
@@ -104,6 +106,18 @@ class CommandeController extends AbstractController
 
         $this->em->persist($commande);
         $this->em->persist($suivi);
+
+        // Stocker les plats choisis
+        foreach ($data['plats_choisis'] ?? [] as $platId) {
+            $plat = $this->em->getRepository(Plat::class)->find($platId);
+            if ($plat) {
+                $cp = new CommandePlat();
+                $cp->setCommande($commande);
+                $cp->setPlat($plat);
+                $this->em->persist($cp);
+            }
+        }
+
         $this->em->flush();
 
         // Enregistrement dans MongoDB

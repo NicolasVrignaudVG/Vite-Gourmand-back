@@ -101,6 +101,9 @@ class Commande
     #[Groups(['commande:read'])]
     private Collection $suivis;
 
+    #[ORM\OneToMany(targetEntity: CommandePlat::class, mappedBy: 'commande', cascade: ['persist', 'remove'])]
+    private Collection $commandePlats;
+
     #[ORM\Column]
     #[Groups(['commande:read'])]
     private \DateTimeImmutable $createdAt;
@@ -111,7 +114,8 @@ class Commande
 
     public function __construct()
     {
-        $this->suivis    = new ArrayCollection();
+        $this->suivis         = new ArrayCollection();
+        $this->commandePlats  = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTime();
         $this->numeroCommande = 'VG-' . strtoupper(substr(uniqid(), -6));
@@ -162,6 +166,8 @@ class Commande
     public function setPretMateriel(bool $p): static { $this->pretMateriel = $p; return $this; }
     public function getSuivis(): Collection { return $this->suivis; }
     public function addSuivi(SuiviCommande $s): static { $this->suivis->add($s); return $this; }
+    public function getCommandePlats(): Collection { return $this->commandePlats; }
+    public function addCommandePlat(CommandePlat $cp): static { if (!$this->commandePlats->contains($cp)) { $this->commandePlats->add($cp); $cp->setCommande($this); } return $this; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
     public function getUpdatedAt(): \DateTimeInterface { return $this->updatedAt; }
 }

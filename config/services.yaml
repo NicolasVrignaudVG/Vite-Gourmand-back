@@ -25,6 +25,6 @@ services:
 
 
     App\Service\MailerService:
-    arguments:
-        $from: '%env(MAILER_SENDER_EMAIL)%'
-        $fromName: '%env(MAILER_SENDER_NAME)%'
+        arguments:
+            $from: '%env(MAILER_SENDER_EMAIL)%'
+            $fromName: '%env(MAILER_SENDER_NAME)%'

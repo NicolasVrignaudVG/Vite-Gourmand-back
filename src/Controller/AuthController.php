@@ -173,4 +173,41 @@ class AuthController extends AbstractController
 
         return $this->json(['message' => 'Mot de passe réinitialisé avec succès.']);
     }
+
+    // ── PUT /api/auth/me ─────────────────────────────────────
+    #[Route('/me', methods: ['PUT'])]
+    public function updateMe(Request $request): JsonResponse
+    {
+        /** @var Utilisateur $user */
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Non authentifié.'], 401);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (isset($data['nom']))       $user->setNom($data['nom']);
+        if (isset($data['prenom']))    $user->setPrenom($data['prenom']);
+        if (isset($data['telephone'])) $user->setTelephone($data['telephone']);
+        if (isset($data['adresse']))   $user->setAdresse($data['adresse']);
+
+        if (!empty($data['password'])) {
+            if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/', $data['password'])) {
+                return $this->json(['error' => 'Mot de passe invalide.'], 400);
+            }
+            $user->setPassword($this->hasher->hashPassword($user, $data['password']));
+        }
+
+        $this->em->flush();
+
+        return $this->json([
+            'message'   => 'Profil mis à jour.',
+            'id'        => $user->getId(),
+            'email'     => $user->getEmail(),
+            'nom'       => $user->getNom(),
+            'prenom'    => $user->getPrenom(),
+            'telephone' => $user->getTelephone(),
+            'adresse'   => $user->getAdresse(),
+        ]);
+    }
 }

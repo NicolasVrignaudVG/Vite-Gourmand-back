@@ -43,10 +43,4 @@ RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
 
-CMD bash -c "\
-    rm -rf /var/www/html/var/cache/prod && \
-    mkdir -p /var/www/html/var/cache/prod && \
-    chmod -R 777 /var/www/html/var && \
-    chown -R www-data:www-data /var/www/html/var && \
-    su www-data -s /bin/bash -c 'php /var/www/html/bin/console cache:warmup --env=prod --no-debug' 2>&1 || true && \
-    apache2-foreground"
+CMD ["apache2-foreground"]

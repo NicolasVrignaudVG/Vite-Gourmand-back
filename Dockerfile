@@ -17,18 +17,19 @@ WORKDIR /var/www/html
 # Copier les fichiers
 COPY . .
 
-# Installer les dépendances (ignorer la vérification plateforme)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+# Créer un .env minimal pour le build
+RUN echo "APP_ENV=prod" > .env && \
+    echo "APP_SECRET=placeholder" >> .env && \
+    echo "DATABASE_URL=mysql://root:pass@localhost:3306/vite_gourmand?serverVersion=8.0" >> .env
+
+# Installer les dépendances sans exécuter les scripts post-install
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs --no-scripts
+
+# Vider le cache manuellement
+RUN mkdir -p var/cache var/log && chmod -R 777 var/
 
 # Permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/var \
-    && mkdir -p var/cache var/log \
-    && chown -R www-data:www-data var/
-
-# Variables d'environnement par défaut
-ENV APP_ENV=prod
-ENV APP_DEBUG=0
+RUN chown -R www-data:www-data /var/www/html
 
 # Configuration Apache
 RUN echo '<VirtualHost *:80>\n\
@@ -38,8 +39,6 @@ RUN echo '<VirtualHost *:80>\n\
         Require all granted\n\
         FallbackResource /index.php\n\
     </Directory>\n\
-    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
-    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 EXPOSE 80

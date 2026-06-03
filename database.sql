@@ -12,7 +12,7 @@ DROP DATABASE IF EXISTS vite_gourmand;
 CREATE DATABASE vite_gourmand
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
-USE vite_gourmand;
+USE b2eahw1nom6ijfhppqqj;
 
 -- ─────────────────────────────────────────
 -- TABLE : role

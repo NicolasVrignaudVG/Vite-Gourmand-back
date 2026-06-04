@@ -41,18 +41,16 @@ class CommandeController extends AbstractController
     {
         $user      = $this->getUser();
         $commandes = $this->cmdRepo->findBy(['utilisateur' => $user], ['createdAt' => 'DESC']);
-        $json      = $this->serializer->serialize($commandes, 'json', ['groups' => 'commande:read']);
-        return new JsonResponse($json, 200, [], true);
+        return $this->json(array_map(fn($c) => $this->formatCommande($c), $commandes));
     }
 
-    // GET /api/employe/commandes — toutes les commandes (employé)
-    #[Route('/api/employe/commandes', methods: ['GET'])]
+    // GET /api/commandes/toutes — toutes les commandes (employé)
+    #[Route('/toutes', methods: ['GET'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function toutesCommandes(): JsonResponse
     {
         $commandes = $this->cmdRepo->findBy([], ['createdAt' => 'DESC']);
-        $json      = $this->serializer->serialize($commandes, 'json', ['groups' => 'commande:read']);
-        return new JsonResponse($json, 200, [], true);
+        return $this->json(array_map(fn($c) => $this->formatCommande($c), $commandes));
     }
 
     // POST /api/commandes — créer une commande

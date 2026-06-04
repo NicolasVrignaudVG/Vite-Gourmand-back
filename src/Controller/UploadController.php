@@ -22,7 +22,6 @@ class UploadController extends AbstractController
     public function uploadImage(Request $request): JsonResponse
     {
         $file = $request->files->get('image');
-
         if (!$file) {
             return $this->json(['error' => 'Aucun fichier reçu.'], 400);
         }
@@ -36,6 +35,11 @@ class UploadController extends AbstractController
         // Taille max 5 Mo
         if ($file->getSize() > 5 * 1024 * 1024) {
             return $this->json(['error' => 'Image trop lourde (max 5 Mo).'], 400);
+        }
+
+        // Créer le dossier s'il n'existe pas
+        if (!is_dir($this->uploadDir)) {
+            mkdir($this->uploadDir, 0775, true);
         }
 
         // Nom de fichier sécurisé

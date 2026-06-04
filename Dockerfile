@@ -43,4 +43,8 @@ RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+CMD bash -c "\
+    mkdir -p /var/www/html/public/images && \
+    chmod -R 777 /var/www/html/public/images && \
+    chown -R www-data:www-data /var/www/html/public/images && \
+    apache2-foreground"

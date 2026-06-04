@@ -270,4 +270,39 @@ class CommandeController extends AbstractController
 
         return $this->json(['message' => 'Statut mis à jour.']);
     }
+
+    private function formatCommande(Commande $c): array
+    {
+        return [
+            'id'               => $c->getId(),
+            'numeroCommande'   => $c->getNumeroCommande(),
+            'statut'           => $c->getStatut(),
+            'datePrestation'   => $c->getDatePrestation()?->format('c'),
+            'adresseLivraison' => $c->getAdresseLivraison(),
+            'villeLivraison'   => $c->getVilleLivraison(),
+            'cpLivraison'      => $c->getCpLivraison(),
+            'nombrePersonnes'  => $c->getNombrePersonnes(),
+            'prixMenu'         => $c->getPrixMenu(),
+            'prixLivraison'    => $c->getPrixLivraison(),
+            'prixTotal'        => $c->getPrixTotal(),
+            'remise'           => $c->getRemise(),
+            'createdAt'        => $c->getCreatedAt()?->format('c'),
+            'menu'             => $c->getMenu() ? [
+                'id'    => $c->getMenu()->getId(),
+                'titre' => $c->getMenu()->getTitre(),
+            ] : null,
+            'utilisateur'      => $c->getUtilisateur() ? [
+                'id'        => $c->getUtilisateur()->getId(),
+                'nom'       => $c->getUtilisateur()->getNom(),
+                'prenom'    => $c->getUtilisateur()->getPrenom(),
+                'email'     => $c->getUtilisateur()->getEmail(),
+                'telephone' => $c->getUtilisateur()->getTelephone(),
+            ] : null,
+            'suivis'           => array_map(fn($s) => [
+                'statut'     => $s->getStatut(),
+                'commentaire'=> $s->getCommentaire(),
+                'created_at' => $s->getCreatedAt()?->format('c'),
+            ], $c->getSuivis()->toArray()),
+        ];
+    }
 }

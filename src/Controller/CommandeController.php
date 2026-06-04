@@ -59,21 +59,21 @@ class CommandeController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $user = $this->getUser();
 
-        $menu = $this->menuRepo->find($data['menu_id'] ?? 0);
-        if (!$menu || !$menu->isActif()) {
-            return $this->json(['error' => 'Menu introuvable ou inactif.'], 404);
+        // Support multi-menus : menus_commandes[] ou fallback menu_id
+        $menusCommandes = $data['menus_commandes'] ?? [];
+        if (empty($menusCommandes) && isset($data['menu_id'])) {
+            $menusCommandes = [[
+                'menu_id'          => $data['menu_id'],
+                'nombre_personnes' => $data['nombre_personnes'] ?? 1,
+                'plats_choisis'    => $data['plats_choisis'] ?? [],
+            ]];
         }
 
-        $nb = max($menu->getNombrePersonneMinimum(), (int) ($data['nombre_personnes'] ?? 1));
-
-        if ($menu->getQuantiteRestante() <= 0) {
-            return $this->json(['error' => 'Ce menu n\'est plus disponible.'], 400);
+        if (empty($menusCommandes)) {
+            return $this->json(['error' => 'Au moins un menu est requis.'], 400);
         }
 
-        // Calcul prix menu
-        $prix = $menu->calculerPrix($nb);
-
-        // Calcul frais livraison avec distance réelle
+        // Calcul frais livraison
         $livraisonData = $this->delivery->calculerFrais(
             $data['adresse_livraison'] ?? '',
             $data['ville_livraison']   ?? '',
@@ -83,26 +83,58 @@ class CommandeController extends AbstractController
 
         $commande = new Commande();
         $commande->setUtilisateur($user);
-        $commande->setMenu($menu);
-        $commande->setNombrePersonnes($nb);
         $commande->setDatePrestation(new \DateTime($data['date_prestation']));
         $commande->setAdresseLivraison($data['adresse_livraison'] ?? '');
         $commande->setVilleLivraison($data['ville_livraison'] ?? '');
         $commande->setCpLivraison($data['cp_livraison'] ?? '');
-        $commande->setPrixMenu($prix['prix_total']);
         $commande->setPrixLivraison($prixLivraison);
-        $commande->setPrixTotal($prix['prix_total'] + $prixLivraison);
-        $commande->setRemise($prix['remise_pct']);
 
-        // Suivi initial
+        $prixMenuTotal = 0.0;
+        $premierMenu   = null;
+
+        foreach ($menusCommandes as $mc) {
+            $menu = $this->menuRepo->find($mc['menu_id'] ?? 0);
+            if (!$menu || !$menu->isActif()) continue;
+            if ($menu->getQuantiteRestante() <= 0) continue;
+
+            $nb   = max($menu->getNombrePersonneMinimum(), (int) ($mc['nombre_personnes'] ?? 1));
+            $prix = $menu->calculerPrix($nb);
+
+            $cm = new CommandeMenu();
+            $cm->setMenu($menu);
+            $cm->setNombrePersonnes($nb);
+            $cm->setPrixTotal($prix['prix_total']);
+            $cm->setRemise($prix['remise_pct']);
+            $commande->addCommandeMenu($cm);
+            $this->em->persist($cm);
+
+            // Plats choisis pour ce menu
+            foreach ($mc['plats_choisis'] ?? [] as $platId) {
+                $plat = $this->em->getRepository(Plat::class)->find($platId);
+                if ($plat) {
+                    $cp = new CommandePlat();
+                    $cp->setCommande($commande);
+                    $cp->setPlat($plat);
+                    $this->em->persist($cp);
+                }
+            }
+
+            $prixMenuTotal += $prix['prix_total'];
+            $menu->setQuantiteRestante($menu->getQuantiteRestante() - 1);
+            if (!$premierMenu) $premierMenu = $menu;
+        }
+
+        if ($premierMenu) $commande->setMenu($premierMenu);
+        $commande->setNombrePersonnes((int) ($data['nombre_personnes'] ?? 1));
+        $commande->setPrixMenu($prixMenuTotal);
+        $commande->setPrixTotal($prixMenuTotal + $prixLivraison);
+        $commande->setRemise(0);
+
         $suivi = new SuiviCommande();
         $suivi->setCommande($commande);
         $suivi->setStatut('en_attente');
         $suivi->setCommentaire('Commande reçue');
         $commande->addSuivi($suivi);
-
-        // Décrémente le stock
-        $menu->setQuantiteRestante($menu->getQuantiteRestante() - 1);
 
         $this->em->persist($commande);
         $this->em->persist($suivi);
@@ -291,6 +323,13 @@ class CommandeController extends AbstractController
                 'id'    => $c->getMenu()->getId(),
                 'titre' => $c->getMenu()->getTitre(),
             ] : null,
+            'menus'            => array_map(fn($cm) => [
+                'id'              => $cm->getMenu()?->getId(),
+                'titre'           => $cm->getMenu()?->getTitre(),
+                'nombrePersonnes' => $cm->getNombrePersonnes(),
+                'prixTotal'       => $cm->getPrixTotal(),
+                'remise'          => $cm->getRemise(),
+            ], $c->getCommandeMenus()->toArray()),
             'utilisateur'      => $c->getUtilisateur() ? [
                 'id'        => $c->getUtilisateur()->getId(),
                 'nom'       => $c->getUtilisateur()->getNom(),

@@ -38,7 +38,7 @@ class Commande
     private ?Utilisateur $utilisateur = null;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     #[Groups(['commande:read'])]
     private ?Menu $menu = null;
 
@@ -104,6 +104,9 @@ class Commande
     #[ORM\OneToMany(targetEntity: CommandePlat::class, mappedBy: 'commande', cascade: ['persist', 'remove'])]
     private Collection $commandePlats;
 
+    #[ORM\OneToMany(targetEntity: CommandeMenu::class, mappedBy: 'commande', cascade: ['persist', 'remove'])]
+    private Collection $commandeMenus;
+
     #[ORM\Column]
     #[Groups(['commande:read'])]
     private \DateTimeImmutable $createdAt;
@@ -116,6 +119,7 @@ class Commande
     {
         $this->suivis         = new ArrayCollection();
         $this->commandePlats  = new ArrayCollection();
+        $this->commandeMenus  = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTime();
         $this->numeroCommande = 'VG-' . strtoupper(substr(uniqid(), -6));
@@ -168,6 +172,9 @@ class Commande
     public function addSuivi(SuiviCommande $s): static { $this->suivis->add($s); return $this; }
     public function getCommandePlats(): Collection { return $this->commandePlats; }
     public function addCommandePlat(CommandePlat $cp): static { if (!$this->commandePlats->contains($cp)) { $this->commandePlats->add($cp); $cp->setCommande($this); } return $this; }
+    public function getCommandeMenus(): Collection { return $this->commandeMenus; }
+    public function addCommandeMenu(CommandeMenu $cm): static { if (!$this->commandeMenus->contains($cm)) { $this->commandeMenus->add($cm); $cm->setCommande($this); } return $this; }
+    public function removeCommandeMenu(CommandeMenu $cm): static { $this->commandeMenus->removeElement($cm); return $this; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
     public function getUpdatedAt(): \DateTimeInterface { return $this->updatedAt; }
 }

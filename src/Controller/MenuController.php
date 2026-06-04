@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Menu;
+use App\Entity\Plat;
 use App\Repository\MenuRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -144,35 +145,50 @@ class MenuController extends AbstractController
         return $m->getImages()->first() ? $m->getImages()->first()->getUrl() : null;
     }
 
-    private function hydrateMenu(Menu $menu, array $data): void
+    // POST /api/menus/{id}/plats — associer des plats au menu
+    #[Route('/{id}/plats', methods: ['POST'])]
+    #[IsGranted('ROLE_EMPLOYE')]
+    public function ajouterPlats(Menu $menu, Request $request): JsonResponse
     {
-        if (isset($data['titre']))                   $menu->setTitre($data['titre']);
-        if (isset($data['description']))             $menu->setDescription($data['description']);
-        if (isset($data['conditions']))              $menu->setConditions($data['conditions']);
-        if (isset($data['prix_par_personne']))       $menu->setPrixParPersonne((float) $data['prix_par_personne']);
-        if (isset($data['nombre_personne_minimum'])) $menu->setNombrePersonneMinimum((int) $data['nombre_personne_minimum']);
-        if (isset($data['quantite_restante']))       $menu->setQuantiteRestante((int) $data['quantite_restante']);
+        $data   = json_decode($request->getContent(), true);
+        $platIds = $data['plat_ids'] ?? [];
 
-        // Gestion image uploadée
-        if (!empty($data['image'])) {
-            // Cherche si une image principale existe déjà
-            $imagePrincipale = null;
-            foreach ($menu->getImages() as $img) {
-                if ($img->isPrincipale()) { $imagePrincipale = $img; break; }
-            }
-            if ($imagePrincipale) {
-                $imagePrincipale->setUrl($data['image']);
-            } else {
-                $newImg = new \App\Entity\MenuImage();
-                $newImg->setUrl($data['image']);
-                $newImg->setAlt($data['titre'] ?? 'Image menu');
-                $newImg->setPrincipale(true);
-                $newImg->setMenu($menu);
-                $this->em->persist($newImg);
+        // Vider les plats existants
+        foreach ($menu->getPlats() as $plat) {
+            $menu->removePlat($plat);
+        }
+
+        // Ajouter les nouveaux plats
+        foreach ($platIds as $platId) {
+            $plat = $this->em->getRepository(Plat::class)->find($platId);
+            if ($plat) {
+                $menu->addPlat($plat);
             }
         }
 
-        // Actif par défaut à la création
-        if (!$menu->getId()) $menu->setActif(true);
+        $this->em->flush();
+        return $this->json(['message' => 'Plats associés au menu.']);
+    }
+
+        private function hydrateMenu(Menu $menu, array $data): void
+    {
+        if (isset($data['titre'])) {
+            $menu->setTitre($data['titre']);
+        }
+        if (isset($data['description'])) {
+            $menu->setDescription($data['description']);
+        }
+        if (isset($data['conditions'])) {
+            $menu->setConditions($data['conditions']);
+        }
+        if (isset($data['prix_par_personne'])) {
+            $menu->setPrixParPersonne((float) $data['prix_par_personne']);
+        }
+        if (isset($data['nombre_personne_minimum'])) {
+            $menu->setNombrePersonneMinimum((int) $data['nombre_personne_minimum']);
+        }
+        if (isset($data['quantite_restante'])) {
+            $menu->setQuantiteRestante((int) $data['quantite_restante']);
+        }
     }
 }

@@ -19,6 +19,9 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-pl
 
 RUN mkdir -p var/cache/prod var/log config/jwt && chmod -R 777 var/
 
+# Configuration PHP pour l'upload de fichiers
+RUN echo "upload_tmp_dir = /tmp\nfile_uploads = On\nupload_max_filesize = 10M\npost_max_size = 12M\nmemory_limit = 256M" > /usr/local/etc/php/conf.d/uploads.ini
+
 # Limiter Apache à 4 processus max pour ne pas dépasser la limite MySQL
 RUN printf "ServerName localhost\n\
 <IfModule mpm_prefork_module>\n\
@@ -44,7 +47,9 @@ RUN chown -R www-data:www-data /var/www/html
 EXPOSE 80
 
 CMD bash -c "\
-    mkdir -p /var/www/html/public/images && \
-    chmod -R 777 /var/www/html/public/images && \
-    chown -R www-data:www-data /var/www/html/public/images && \
+    rm -rf /var/www/html/var/cache/prod && \
+    mkdir -p /var/www/html/var/cache/prod && \
+    chmod -R 777 /var/www/html/var && \
+    chown -R www-data:www-data /var/www/html/var && \
+    su www-data -s /bin/bash -c 'php /var/www/html/bin/console cache:warmup --env=prod --no-debug' 2>&1 || true && \
     apache2-foreground"

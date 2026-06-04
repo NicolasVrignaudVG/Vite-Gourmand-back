@@ -2,3 +2,11 @@ lexik_jwt_authentication:
     secret_key: '%env(base64:JWT_SECRET_KEY)%'
     public_key: '%env(base64:JWT_PUBLIC_KEY)%'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
+    token_extractors:
+        cookie:
+            enabled: true
+            name: jwt_token
+        authorization_header:
+            enabled: true
+            prefix: Bearer
+            name: Authorization

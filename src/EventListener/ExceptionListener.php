@@ -15,31 +15,24 @@ class ExceptionListener
     {
         $request = $event->getRequest();
 
-        // Appliquer uniquement aux routes API
         if (!str_starts_with($request->getPathInfo(), '/api')) {
             return;
         }
 
-        $exception = $event->getThrowable();
-
-        // Déterminer le code HTTP
+        $exception  = $event->getThrowable();
         $statusCode = $exception instanceof HttpExceptionInterface
             ? $exception->getStatusCode()
             : 500;
 
-        // Message d'erreur selon l'environnement
-        $message = $statusCode === 500
-            ? 'Une erreur interne est survenue. Veuillez réessayer.'
-            : $exception->getMessage();
-
+        // Afficher le message complet pour débugger
         $response = new JsonResponse([
-            'error'  => $message,
-            'code'   => $statusCode,
+            'error'   => $exception->getMessage(),
+            'code'    => $statusCode,
+            'file'    => $exception->getFile(),
+            'line'    => $exception->getLine(),
         ], $statusCode);
 
-        // Ajouter les headers CORS
         $response->headers->set('Access-Control-Allow-Origin', '*');
-
         $event->setResponse($response);
     }
 }

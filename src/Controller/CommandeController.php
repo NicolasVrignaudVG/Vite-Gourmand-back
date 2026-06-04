@@ -3,6 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Commande;
+use App\Entity\CommandeMenu;
+use App\Entity\CommandePlat;
+use App\Entity\Plat;
 use App\Entity\SuiviCommande;
 use App\Repository\CommandeRepository;
 use App\Repository\MenuRepository;
@@ -345,3 +348,4 @@ class CommandeController extends AbstractController
         ];
     }
 }
+

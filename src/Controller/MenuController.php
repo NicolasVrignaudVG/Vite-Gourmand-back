@@ -3,7 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Menu;
+use App\Entity\MenuImage;
 use App\Entity\Plat;
+use App\Entity\Theme;
+use App\Entity\Regime;
 use App\Repository\MenuRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -170,25 +173,56 @@ class MenuController extends AbstractController
         return $this->json(['message' => 'Plats associés au menu.']);
     }
 
-        private function hydrateMenu(Menu $menu, array $data): void
+    private function hydrateMenu(Menu $menu, array $data): void
     {
-        if (isset($data['titre'])) {
-            $menu->setTitre($data['titre']);
+        if (isset($data['titre']))                   $menu->setTitre($data['titre']);
+        if (isset($data['description']))             $menu->setDescription($data['description']);
+        if (isset($data['conditions']))              $menu->setConditions($data['conditions']);
+        if (isset($data['prix_par_personne']))       $menu->setPrixParPersonne((float) $data['prix_par_personne']);
+        if (isset($data['nombre_personne_minimum'])) $menu->setNombrePersonneMinimum((int) $data['nombre_personne_minimum']);
+        if (isset($data['quantite_restante']))       $menu->setQuantiteRestante((int) $data['quantite_restante']);
+
+        // Gestion thème
+        if (isset($data['theme']) && $data['theme']) {
+            $theme = $this->em->getRepository(Theme::class)->findOneBy(['libelle' => $data['theme']]);
+            if (!$theme) {
+                $theme = new Theme();
+                $theme->setLibelle($data['theme']);
+                $this->em->persist($theme);
+            }
+            $menu->setTheme($theme);
         }
-        if (isset($data['description'])) {
-            $menu->setDescription($data['description']);
+
+        // Gestion régime
+        if (isset($data['regime']) && $data['regime']) {
+            $regime = $this->em->getRepository(Regime::class)->findOneBy(['libelle' => $data['regime']]);
+            if (!$regime) {
+                $regime = new Regime();
+                $regime->setLibelle($data['regime']);
+                $this->em->persist($regime);
+            }
+            $menu->setRegime($regime);
         }
-        if (isset($data['conditions'])) {
-            $menu->setConditions($data['conditions']);
+
+        // Gestion image uploadée
+        if (!empty($data['image'])) {
+            $imagePrincipale = null;
+            foreach ($menu->getImages() as $img) {
+                if ($img->isPrincipale()) { $imagePrincipale = $img; break; }
+            }
+            if ($imagePrincipale) {
+                $imagePrincipale->setUrl($data['image']);
+            } else {
+                $newImg = new MenuImage();
+                $newImg->setUrl($data['image']);
+                $newImg->setAlt($data['titre'] ?? 'Image menu');
+                $newImg->setPrincipale(true);
+                $newImg->setMenu($menu);
+                $this->em->persist($newImg);
+            }
         }
-        if (isset($data['prix_par_personne'])) {
-            $menu->setPrixParPersonne((float) $data['prix_par_personne']);
-        }
-        if (isset($data['nombre_personne_minimum'])) {
-            $menu->setNombrePersonneMinimum((int) $data['nombre_personne_minimum']);
-        }
-        if (isset($data['quantite_restante'])) {
-            $menu->setQuantiteRestante((int) $data['quantite_restante']);
-        }
+
+        // Actif par défaut à la création
+        if (!$menu->getId()) $menu->setActif(true);
     }
 }

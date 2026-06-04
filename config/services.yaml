@@ -28,3 +28,8 @@ services:
         arguments:
             $from: '%env(MAILER_SENDER_EMAIL)%'
             $fromName: '%env(MAILER_SENDER_NAME)%'
+
+    app.jwt_cookie_extractor:
+        class: App\Security\JwtCookieExtractor
+        tags:
+            - { name: lexik_jwt_authentication.token_extractor }

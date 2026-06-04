@@ -7,6 +7,7 @@ use App\Entity\Role;
 use App\Service\MailerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -209,5 +210,24 @@ class AuthController extends AbstractController
             'telephone' => $user->getTelephone(),
             'adresse'   => $user->getAdresse(),
         ]);
+    }
+
+    // ── POST /api/auth/logout ────────────────────────────────
+    #[Route('/logout', methods: ['POST'])]
+    public function logout(): JsonResponse
+    {
+        $response = $this->json(['message' => 'Déconnexion réussie.']);
+
+        // Supprimer le cookie JWT
+        $cookie = Cookie::create('jwt_token')
+            ->withValue('')
+            ->withExpires(time() - 3600)
+            ->withPath('/')
+            ->withSecure(true)
+            ->withHttpOnly(true)
+            ->withSameSite('None');
+
+        $response->headers->setCookie($cookie);
+        return $response;
     }
 }

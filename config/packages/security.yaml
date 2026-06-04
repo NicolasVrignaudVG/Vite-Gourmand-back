@@ -22,17 +22,20 @@ security:
                 check_path:              /api/auth/login
                 username_path:           email
                 password_path:           password
-                success_handler:         lexik_jwt_authentication.handler.authentication_success
+                success_handler:         App\Security\JwtCookieSuccessHandler
                 failure_handler:         lexik_jwt_authentication.handler.authentication_failure
 
         api:
             pattern:   ^/api
             stateless: true
-            jwt: ~
+            jwt:
+                token_extractors:
+                    - app.jwt_cookie_extractor
 
     access_control:
         # Public
         - { path: ^/api/auth/login,       roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/logout,      roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/register,    roles: PUBLIC_ACCESS }
         - { path: ^/api/menus,            roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/api/horaires,         roles: PUBLIC_ACCESS, methods: [GET] }

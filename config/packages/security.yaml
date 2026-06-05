@@ -32,15 +32,16 @@ security:
 
     access_control:
         # Public
-        - { path: ^/api/auth/login,       roles: PUBLIC_ACCESS }
-        - { path: ^/api/auth/logout,      roles: PUBLIC_ACCESS }
-        - { path: ^/api/auth/register,    roles: PUBLIC_ACCESS }
-        - { path: ^/api/menus,            roles: PUBLIC_ACCESS, methods: [GET] }
-        - { path: ^/api/horaires,         roles: PUBLIC_ACCESS, methods: [GET] }
-        - { path: ^/api/contact,          roles: PUBLIC_ACCESS, methods: [POST] }
-        - { path: ^/api/auth/forgot-password,  roles: PUBLIC_ACCESS }
-        - { path: ^/api/auth/reset-password,   roles: PUBLIC_ACCESS }
-        - { path: ^/api/commandes/livraison, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/auth/login,           roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/logout,          roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/refresh,         roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/register,        roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/forgot-password, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/reset-password,  roles: PUBLIC_ACCESS }
+        - { path: ^/api/menus,                roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/horaires,             roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/contact,              roles: PUBLIC_ACCESS, methods: [POST] }
+        - { path: ^/api/commandes/livraison,  roles: PUBLIC_ACCESS, methods: [GET] }
 
         # Utilisateur connecté
         - { path: ^/api/commandes,        roles: ROLE_USER }
@@ -49,8 +50,8 @@ security:
 
         # Employé
         - { path: ^/api/employe,          roles: ROLE_EMPLOYE }
-        - { path: ^/api/plats, roles: ROLE_EMPLOYE }
-        - { path: ^/api/upload, roles: ROLE_EMPLOYE }
+        - { path: ^/api/plats,            roles: ROLE_EMPLOYE }
+        - { path: ^/api/upload,           roles: ROLE_EMPLOYE }
 
         # Admin uniquement
         - { path: ^/api/admin,            roles: ROLE_ADMIN }

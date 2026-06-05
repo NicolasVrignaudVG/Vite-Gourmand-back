@@ -29,7 +29,13 @@ services:
             $from: '%env(MAILER_SENDER_EMAIL)%'
             $fromName: '%env(MAILER_SENDER_NAME)%'
 
-    app.jwt_cookie_extractor:
-        class: App\Security\JwtCookieExtractor
+    App\Controller\AuthController:
+        arguments:
+            $registerLimiter: '@limiter.register_limiter'
+            $forgotPasswordLimiter: '@limiter.forgot_password_limiter'
+
+    App\EventSubscriber\LoginRateLimiterSubscriber:
+        arguments:
+            $loginLimiter: '@limiter.login_limiter'
         tags:
-            - { name: lexik_jwt_authentication.token_extractor }
+            - { name: kernel.event_subscriber }

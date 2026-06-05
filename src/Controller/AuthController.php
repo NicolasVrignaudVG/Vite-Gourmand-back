@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -22,12 +23,20 @@ class AuthController extends AbstractController
         private UserPasswordHasherInterface $hasher,
         private ValidatorInterface          $validator,
         private MailerService               $mailer,
+        private RateLimiterFactory          $registerLimiter,
+        private RateLimiterFactory          $forgotPasswordLimiter,
     ) {}
 
     // ── POST /api/auth/register ──────────────────────────────
     #[Route('/register', methods: ['POST'])]
     public function register(Request $request): JsonResponse
     {
+        // Rate limiting : 3 inscriptions par IP par 10 minutes
+        $limiter = $this->registerLimiter->create($request->getClientIp());
+        if (!$limiter->consume(1)->isAccepted()) {
+            return $this->json(['error' => 'Trop de tentatives. Veuillez réessayer dans quelques minutes.'], 429);
+        }
+
         $data = json_decode($request->getContent(), true);
 
         // Validation mot de passe (10 car. min, maj, min, chiffre, spécial)
@@ -95,14 +104,15 @@ class AuthController extends AbstractController
     }
 
     // ── POST /api/auth/forgot-password ───────────────────────
-    /**
-     * Demande de réinitialisation : génère un token et envoie un mail.
-     * Pour des raisons de sécurité, retourne toujours un message générique
-     * (qu'un email existe ou non), afin d'empêcher la découverte de comptes.
-     */
     #[Route('/forgot-password', methods: ['POST'])]
     public function forgotPassword(Request $request): JsonResponse
     {
+        // Rate limiting : 3 demandes par IP par 15 minutes
+        $limiter = $this->forgotPasswordLimiter->create($request->getClientIp());
+        if (!$limiter->consume(1)->isAccepted()) {
+            return $this->json(['error' => 'Trop de tentatives. Veuillez réessayer dans quelques minutes.'], 429);
+        }
+
         $data  = json_decode($request->getContent(), true);
         $email = trim($data['email'] ?? '');
 
@@ -113,29 +123,20 @@ class AuthController extends AbstractController
         $user = $this->em->getRepository(Utilisateur::class)->findOneBy(['email' => $email]);
 
         if ($user) {
-            // Génère un token sécurisé (64 caractères hex)
             $token  = bin2hex(random_bytes(32));
             $expire = new \DateTime('+1 hour');
-
             $user->setResetToken($token);
             $user->setResetTokenExpiresAt($expire);
-
             $this->em->flush();
-
-            // Envoi du mail avec le lien de réinitialisation
             $this->mailer->sendResetPassword($user, $token);
         }
 
-        // Réponse identique dans tous les cas (sécurité)
         return $this->json([
             'message' => 'Si cet e-mail existe dans notre base, un lien de réinitialisation a été envoyé.'
         ]);
     }
 
     // ── POST /api/auth/reset-password ────────────────────────
-    /**
-     * Valide le token et met à jour le mot de passe.
-     */
     #[Route('/reset-password', methods: ['POST'])]
     public function resetPassword(Request $request): JsonResponse
     {
@@ -147,7 +148,6 @@ class AuthController extends AbstractController
             return $this->json(['error' => 'Token et mot de passe requis.'], 400);
         }
 
-        // Validation mot de passe (mêmes règles que register)
         if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/', $newPassword)) {
             return $this->json([
                 'error' => 'Le mot de passe doit contenir au minimum 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'
@@ -160,16 +160,13 @@ class AuthController extends AbstractController
             return $this->json(['error' => 'Lien de réinitialisation invalide.'], 400);
         }
 
-        // Vérifie l'expiration du token
         if ($user->getResetTokenExpiresAt() < new \DateTime()) {
             return $this->json(['error' => 'Ce lien a expiré. Veuillez en demander un nouveau.'], 400);
         }
 
-        // Met à jour le mot de passe
         $user->setPassword($this->hasher->hashPassword($user, $newPassword));
         $user->setResetToken(null);
         $user->setResetTokenExpiresAt(null);
-
         $this->em->flush();
 
         return $this->json(['message' => 'Mot de passe réinitialisé avec succès.']);
@@ -218,7 +215,6 @@ class AuthController extends AbstractController
     {
         $response = $this->json(['message' => 'Déconnexion réussie.']);
 
-        // Supprimer le cookie JWT
         $cookie = Cookie::create('jwt_token')
             ->withValue('')
             ->withExpires(time() - 3600)

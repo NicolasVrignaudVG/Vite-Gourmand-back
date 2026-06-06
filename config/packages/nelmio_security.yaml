@@ -35,7 +35,6 @@ nelmio_security:
     # puis repasse à false une fois validé.
     csp:
         enabled: true
-        report_only: false
         hosts: []
         content_types: []
         enforce:

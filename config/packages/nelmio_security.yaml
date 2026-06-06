@@ -17,12 +17,6 @@ nelmio_security:
         paths:
             '^/.*': SAMEORIGIN
 
-    # ── X-XSS-Protection ─────────────────────────────────────
-    # Disponible dans cette version du bundle (listé dans les options valides)
-    xss_protection:
-        enabled: true
-        mode_block: true
-
     # ── Strict-Transport-Security ─────────────────────────────
     # Force HTTPS pendant 1 an — ne jamais activer sur un site sans HTTPS !
     # Render utilise HTTPS → on peut l'activer en toute sécurité

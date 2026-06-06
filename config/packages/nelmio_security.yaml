@@ -1,0 +1,73 @@
+# config/packages/nelmio_security.yaml
+# ─────────────────────────────────────────────────────────────────
+# Headers de sécurité HTTP
+# Installation : composer require nelmio/security-bundle
+# ─────────────────────────────────────────────────────────────────
+
+nelmio_security:
+
+    # ── X-Content-Type-Options: nosniff ──────────────────────
+    # Empêche le navigateur de deviner le type MIME (MIME sniffing)
+    content_type:
+        nosniff: true
+
+    # ── X-Frame-Options ──────────────────────────────────────
+    # Bloque l'intégration dans une iframe externe (anti-clickjacking)
+    clickjacking:
+        paths:
+            '^/.*': SAMEORIGIN
+
+    # ── X-XSS-Protection ─────────────────────────────────────
+    # Protection XSS pour les anciens navigateurs
+    xss_protection:
+        enabled: true
+        mode_block: true
+
+    # ── Referrer-Policy ──────────────────────────────────────
+    referrer_policy:
+        enabled: true
+        policies:
+            - 'strict-origin-when-cross-origin'
+
+    # ── Content-Security-Policy ──────────────────────────────
+    # Restreint les sources autorisées pour scripts, styles, images, etc.
+    # Passe report_only à true pendant les tests pour ne pas bloquer,
+    # puis repasse à false une fois validé.
+    csp:
+        enabled: true
+        report_only: false
+        hosts: []
+        content_types: []
+        enforce:
+            default-src:
+                - 'self'
+            script-src:
+                - 'self'
+                - 'cdn.jsdelivr.net'          # Bootstrap JS
+                - 'unsafe-inline'             # Bootstrap utilise des handlers inline
+            style-src:
+                - 'self'
+                - 'cdn.jsdelivr.net'          # Bootstrap CSS
+                - 'fonts.googleapis.com'
+                - 'unsafe-inline'             # Bootstrap injecte des styles inline
+            font-src:
+                - 'self'
+                - 'fonts.gstatic.com'
+                - 'cdn.jsdelivr.net'          # Bootstrap Icons
+            img-src:
+                - 'self'
+                - 'data:'
+                - 'https://vite-gourmand-back-chap.onrender.com'  # images API
+                - 'https://images.pexels.com'
+                - 'https://www.pexels.com'
+            connect-src:
+                - 'self'
+                - 'https://vite-gourmand-back-chap.onrender.com'  # appels API
+            frame-ancestors:
+                - 'none'                      # renforce l'anti-clickjacking
+            form-action:
+                - 'self'
+            object-src:
+                - 'none'
+            base-uri:
+                - 'self'

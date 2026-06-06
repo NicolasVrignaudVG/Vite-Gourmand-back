@@ -1,6 +1,8 @@
 nelmio_cors:
     defaults:
-        origin_regex: false
+        # true : permet d'utiliser un pattern regex dans CORS_ALLOW_ORIGIN
+        # (nécessaire pour le dev local où on définit ^https?://(localhost|127\.0\.0\.1)(:\d+)?$)
+        origin_regex: true
         allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
         allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
         allow_headers: ['Content-Type', 'Authorization']

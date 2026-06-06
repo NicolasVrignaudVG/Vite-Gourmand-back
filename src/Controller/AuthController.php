@@ -26,6 +26,7 @@ class AuthController extends AbstractController
         private ValidatorInterface          $validator,
         private MailerService               $mailer,
         private JWTTokenManagerInterface    $jwtManager,
+        private RateLimiterFactory          $loginLimiter,         // login_limiter dans rate_limiter.yaml
         private RateLimiterFactory          $registerLimiter,
         private RateLimiterFactory          $forgotPasswordLimiter,
     ) {}
@@ -39,28 +40,33 @@ class AuthController extends AbstractController
             return $this->json(['error' => 'Trop de tentatives. Veuillez réessayer dans quelques minutes.'], 429);
         }
 
-        $data     = json_decode($request->getContent(), true);
+        $data     = json_decode($request->getContent(), true) ?? [];
         $password = $data['password'] ?? '';
 
+        // ── Validation mot de passe (10 car., maj, min, chiffre, spécial) ──
         if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/', $password)) {
             return $this->json(['error' => 'Le mot de passe doit contenir au minimum 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'], 400);
         }
 
-        $existing = $this->em->getRepository(Utilisateur::class)->findOneBy(['email' => $data['email'] ?? '']);
+        // ── Vérification e-mail unique ───────────────────────
+        $existing = $this->em->getRepository(Utilisateur::class)->findOneBy(['email' => strtolower(trim($data['email'] ?? ''))]);
         if ($existing) {
             return $this->json(['error' => 'Cette adresse e-mail est déjà utilisée.'], 409);
         }
 
         $role = $this->em->getRepository(Role::class)->findOneBy(['libelle' => 'utilisateur']);
         $user = new Utilisateur();
-        $user->setEmail($data['email'] ?? '');
-        $user->setNom($data['nom'] ?? '');
-        $user->setPrenom($data['prenom'] ?? '');
-        $user->setTelephone($data['telephone'] ?? null);
-        $user->setAdresse($data['adresse'] ?? null);
+
+        // ── Sanitisation — strip_tags() sur tous les champs texte ──
+        $user->setEmail(strtolower(trim(strip_tags($data['email'] ?? ''))));
+        $user->setNom(strip_tags(trim($data['nom'] ?? '')));
+        $user->setPrenom(strip_tags(trim($data['prenom'] ?? '')));
+        $user->setTelephone(preg_replace('/[^0-9+]/', '', $data['telephone'] ?? ''));
+        $user->setAdresse(strip_tags(trim($data['adresse'] ?? '')));
         $user->setRole($role);
         $user->setPassword($this->hasher->hashPassword($user, $password));
 
+        // ── Validation entité Symfony (annotations @Assert sur l'entité) ──
         $errors = $this->validator->validate($user);
         if (count($errors) > 0) {
             return $this->json(['error' => (string) $errors], 400);
@@ -101,8 +107,8 @@ class AuthController extends AbstractController
             return $this->json(['error' => 'Trop de tentatives. Veuillez réessayer dans quelques minutes.'], 429);
         }
 
-        $data  = json_decode($request->getContent(), true);
-        $email = trim($data['email'] ?? '');
+        $data  = json_decode($request->getContent(), true) ?? [];
+        $email = strtolower(trim(strip_tags($data['email'] ?? '')));
         if (!$email) return $this->json(['error' => "L'adresse e-mail est requise."], 400);
 
         $user = $this->em->getRepository(Utilisateur::class)->findOneBy(['email' => $email]);
@@ -115,6 +121,7 @@ class AuthController extends AbstractController
             $this->mailer->sendResetPassword($user, $token);
         }
 
+        // Réponse identique que l'e-mail existe ou non (anti-énumération)
         return $this->json(['message' => 'Si cet e-mail existe dans notre base, un lien de réinitialisation a été envoyé.']);
     }
 
@@ -122,8 +129,8 @@ class AuthController extends AbstractController
     #[Route('/reset-password', methods: ['POST'])]
     public function resetPassword(Request $request): JsonResponse
     {
-        $data        = json_decode($request->getContent(), true);
-        $token       = trim($data['token'] ?? '');
+        $data        = json_decode($request->getContent(), true) ?? [];
+        $token       = trim(strip_tags($data['token'] ?? ''));
         $newPassword = $data['password'] ?? '';
 
         if (!$token || !$newPassword) return $this->json(['error' => 'Token et mot de passe requis.'], 400);
@@ -151,11 +158,13 @@ class AuthController extends AbstractController
         $user = $this->getUser();
         if (!$user) return $this->json(['error' => 'Non authentifié.'], 401);
 
-        $data = json_decode($request->getContent(), true);
-        if (isset($data['nom']))       $user->setNom($data['nom']);
-        if (isset($data['prenom']))    $user->setPrenom($data['prenom']);
-        if (isset($data['telephone'])) $user->setTelephone($data['telephone']);
-        if (isset($data['adresse']))   $user->setAdresse($data['adresse']);
+        $data = json_decode($request->getContent(), true) ?? [];
+
+        // ── Sanitisation — strip_tags() sur tous les champs modifiables ──
+        if (isset($data['nom']))       $user->setNom(strip_tags(trim($data['nom'])));
+        if (isset($data['prenom']))    $user->setPrenom(strip_tags(trim($data['prenom'])));
+        if (isset($data['telephone'])) $user->setTelephone(preg_replace('/[^0-9+]/', '', $data['telephone']));
+        if (isset($data['adresse']))   $user->setAdresse(strip_tags(trim($data['adresse'])));
 
         if (!empty($data['password'])) {
             if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/', $data['password'])) {
@@ -165,9 +174,15 @@ class AuthController extends AbstractController
         }
 
         $this->em->flush();
-        return $this->json(['message' => 'Profil mis à jour.', 'id' => $user->getId(),
-            'email' => $user->getEmail(), 'nom' => $user->getNom(), 'prenom' => $user->getPrenom(),
-            'telephone' => $user->getTelephone(), 'adresse' => $user->getAdresse()]);
+        return $this->json([
+            'message'   => 'Profil mis à jour.',
+            'id'        => $user->getId(),
+            'email'     => $user->getEmail(),
+            'nom'       => $user->getNom(),
+            'prenom'    => $user->getPrenom(),
+            'telephone' => $user->getTelephone(),
+            'adresse'   => $user->getAdresse(),
+        ]);
     }
 
     // ── POST /api/auth/refresh ───────────────────────────────
@@ -205,10 +220,13 @@ class AuthController extends AbstractController
             ->withPath('/api/auth')->withSecure(true)->withHttpOnly(true)->withSameSite('None');
 
         $response = new JsonResponse(['message' => 'Token renouvelé.', 'user' => [
-            'id' => $user->getId(), 'email' => $user->getUserIdentifier(),
-            'nom' => $user->getNom(), 'prenom' => $user->getPrenom(),
+            'id'        => $user->getId(),
+            'email'     => $user->getUserIdentifier(),
+            'nom'       => $user->getNom(),
+            'prenom'    => $user->getPrenom(),
             'telephone' => $user->getTelephone(),
-            'role' => $user->getRole()?->getLibelle(), 'roles' => $user->getRoles(),
+            'role'      => $user->getRole()?->getLibelle(),
+            'roles'     => $user->getRoles(),
         ]]);
         $response->headers->setCookie($jwtCookie);
         $response->headers->setCookie($refreshCookie);
@@ -219,7 +237,7 @@ class AuthController extends AbstractController
     #[Route('/logout', methods: ['POST'])]
     public function logout(Request $request): JsonResponse
     {
-        // Révoquer le refresh token
+        // Révoquer le refresh token en base
         $refreshTokenValue = $request->cookies->get('refresh_token');
         if ($refreshTokenValue) {
             $refreshToken = $this->em->getRepository(RefreshToken::class)
@@ -229,7 +247,7 @@ class AuthController extends AbstractController
 
         $response = $this->json(['message' => 'Déconnexion réussie.']);
 
-        // Supprimer les deux cookies
+        // Supprimer les deux cookies côté client
         foreach (['jwt_token' => '/', 'refresh_token' => '/api/auth'] as $name => $path) {
             $response->headers->setCookie(Cookie::create($name)->withValue('')
                 ->withExpires(time() - 3600)->withPath($path)

@@ -31,7 +31,7 @@ security:
             jwt: ~
 
     access_control:
-        # Public
+        # ── Routes publiques ───────────────────────────────────
         - { path: ^/api/auth/login,           roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/logout,          roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/refresh,         roles: PUBLIC_ACCESS }
@@ -42,19 +42,21 @@ security:
         - { path: ^/api/horaires,             roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/api/contact,              roles: PUBLIC_ACCESS, methods: [POST] }
         - { path: ^/api/commandes/livraison,  roles: PUBLIC_ACCESS, methods: [GET] }
+        # Avis validés affichés sur la page d'accueil (lecture publique)
+        - { path: ^/api/avis,                 roles: PUBLIC_ACCESS, methods: [GET] }
 
-        # Utilisateur connecté
-        - { path: ^/api/commandes,        roles: ROLE_USER }
-        - { path: ^/api/utilisateur,      roles: ROLE_USER }
-        - { path: ^/api/avis,             roles: ROLE_USER, methods: [POST] }
+        # ── Utilisateur connecté ───────────────────────────────
+        - { path: ^/api/commandes,            roles: ROLE_USER }
+        - { path: ^/api/utilisateur,          roles: ROLE_USER }
+        - { path: ^/api/avis,                 roles: ROLE_USER, methods: [POST] }
 
-        # Employé
-        - { path: ^/api/employe,          roles: ROLE_EMPLOYE }
-        - { path: ^/api/plats,            roles: ROLE_EMPLOYE }
-        - { path: ^/api/upload,           roles: ROLE_EMPLOYE }
+        # ── Employé ───────────────────────────────────────────
+        - { path: ^/api/employe,              roles: ROLE_EMPLOYE }
+        - { path: ^/api/plats,                roles: ROLE_EMPLOYE }
+        - { path: ^/api/upload,               roles: ROLE_EMPLOYE }
 
-        # Admin uniquement
-        - { path: ^/api/admin,            roles: ROLE_ADMIN }
+        # ── Admin uniquement ───────────────────────────────────
+        - { path: ^/api/admin,                roles: ROLE_ADMIN }
 
     role_hierarchy:
         ROLE_EMPLOYE: ROLE_USER

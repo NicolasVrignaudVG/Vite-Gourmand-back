@@ -1,15 +1,21 @@
 framework:
     rate_limiter:
+        # ── Login : 5 tentatives / 1 minute par IP ────────────
+        # Utilisé par LoginRateLimiterSubscriber sur POST /api/auth/login
         login_limiter:
             policy: sliding_window
             limit: 5
             interval: '1 minute'
 
+        # ── Inscription : 3 tentatives / 10 minutes par IP ───
+        # Utilisé dans AuthController::register()
         register_limiter:
             policy: sliding_window
             limit: 3
             interval: '10 minutes'
 
+        # ── Mot de passe oublié : 3 tentatives / 15 min ───────
+        # Utilisé dans AuthController::forgotPassword()
         forgot_password_limiter:
             policy: sliding_window
             limit: 3

@@ -1,0 +1,30 @@
+# config/packages/prod/monolog.yaml
+# ─────────────────────────────────────────────────────────────────
+# Logs en production : erreurs loguées dans un fichier,
+# stack traces jamais exposées dans les réponses HTTP.
+# ─────────────────────────────────────────────────────────────────
+
+monolog:
+    handlers:
+
+        # ── Handler principal : buffer les logs jusqu'à une erreur ──
+        # "fingers_crossed" : ne persiste les logs que si une erreur
+        # survient, ce qui évite de loguer chaque requête réussie.
+        main:
+            type:         fingers_crossed
+            action_level: error
+            handler:      nested
+            excluded_http_codes: [404, 405]  # Pas de log pour les 404/405 normaux
+            buffer_size:  50                 # Garde les 50 derniers logs en mémoire
+
+        # ── Handler de fichier ────────────────────────────────────
+        nested:
+            type:  stream
+            path:  '%kernel.logs_dir%/%kernel.environment%.log'
+            level: debug
+
+        # ── Handler console (pour les commandes Symfony) ──────────
+        console:
+            type:               console
+            process_psr_3_messages: false
+            channels:           ['!event', '!doctrine']

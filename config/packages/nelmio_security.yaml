@@ -17,6 +17,12 @@ nelmio_security:
         paths:
             '^/.*': SAMEORIGIN
 
+    # ── X-XSS-Protection ─────────────────────────────────────
+    # Disponible dans cette version du bundle (listé dans les options valides)
+    xss_protection:
+        enabled: true
+        mode_block: true
+
     # ── Strict-Transport-Security ─────────────────────────────
     # Force HTTPS pendant 1 an — ne jamais activer sur un site sans HTTPS !
     # Render utilise HTTPS → on peut l'activer en toute sécurité
@@ -24,11 +30,6 @@ nelmio_security:
         enabled: true
         hsts_max_age: 31536000      # 1 an en secondes
         hsts_subdomains: true
-
-    # ── Masquer X-Powered-By ──────────────────────────────────
-    # Supprime le header "X-Powered-By: PHP/8.4.22" qui expose la version
-    hide_powered_by:
-        enabled: true
 
     # ── Referrer-Policy ──────────────────────────────────────
     referrer_policy:

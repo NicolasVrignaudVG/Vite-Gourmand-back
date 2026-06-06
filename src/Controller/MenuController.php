@@ -173,6 +173,55 @@ class MenuController extends AbstractController
         return $this->json(['message' => 'Plats associés au menu.']);
     }
 
+    // POST /api/menus/{id}/images — ajouter une image à la galerie
+    #[Route('/{id}/images', methods: ['POST'])]
+    #[IsGranted('ROLE_EMPLOYE')]
+    public function ajouterImage(Menu $menu, Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $url  = trim($data['url'] ?? '');
+
+        if (!$url) {
+            return $this->json(['error' => 'URL manquante.'], 400);
+        }
+
+        $img = new MenuImage();
+        $img->setUrl($url);
+        $img->setAlt(strip_tags($data['alt'] ?? $menu->getTitre()));
+        $img->setPrincipale((bool) ($data['principale'] ?? false));
+        $img->setMenu($menu);
+
+        $this->em->persist($img);
+        $this->em->flush();
+
+        return $this->json([
+            'id'         => $img->getId(),
+            'url'        => $img->getUrl(),
+            'alt'        => $img->getAlt(),
+            'principale' => $img->isPrincipale(),
+        ], 201);
+    }
+
+    // DELETE /api/menus/{menuId}/images/{imgId} — supprimer une image de la galerie
+    #[Route('/{menuId}/images/{imgId}', methods: ['DELETE'])]
+    #[IsGranted('ROLE_EMPLOYE')]
+    public function supprimerImage(int $menuId, int $imgId): JsonResponse
+    {
+        $img = $this->em->getRepository(MenuImage::class)->find($imgId);
+
+        if (!$img || $img->getMenu()?->getId() !== $menuId) {
+            return $this->json(['error' => 'Image introuvable.'], 404);
+        }
+        if ($img->isPrincipale()) {
+            return $this->json(['error' => 'Impossible de supprimer l\'image principale.'], 400);
+        }
+
+        $this->em->remove($img);
+        $this->em->flush();
+
+        return $this->json(['message' => 'Image supprimée.']);
+    }
+
     private function hydrateMenu(Menu $menu, array $data): void
     {
         if (isset($data['titre']))                   $menu->setTitre($data['titre']);

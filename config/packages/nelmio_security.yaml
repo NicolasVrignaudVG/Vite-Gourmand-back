@@ -7,24 +7,22 @@
 nelmio_security:
 
     # ── X-Content-Type-Options: nosniff ──────────────────────
-    # Empêche le navigateur de deviner le type MIME (MIME sniffing)
     content_type:
         nosniff: true
 
     # ── X-Frame-Options ──────────────────────────────────────
-    # Bloque l'intégration dans une iframe externe (anti-clickjacking)
     clickjacking:
         paths:
             '^/.*': SAMEORIGIN
 
-    # ── Strict-Transport-Security ─────────────────────────────
-    # Note : forced_ssl désactivé car Render gère HTTPS en amont (proxy).
-    # Activer forced_ssl sur Render cause des boucles de redirection.
-    # Le header HSTS est envoyé par Render directement.
-    # forced_ssl:
-    #     enabled: true
-    #     hsts_max_age: 31536000
-    #     hsts_subdomains: true
+    # ── Strict-Transport-Security (HSTS) ─────────────────────
+    # forced_ssl avec redirect: false envoie uniquement le header HSTS
+    # sans rediriger HTTP→HTTPS (Render gère la redirection en amont).
+    forced_ssl:
+        enabled: true
+        redirect: false
+        hsts_max_age: 31536000
+        hsts_subdomains: true
 
     # ── Referrer-Policy ──────────────────────────────────────
     referrer_policy:
@@ -32,10 +30,22 @@ nelmio_security:
         policies:
             - 'strict-origin-when-cross-origin'
 
+    # ── Permissions-Policy ───────────────────────────────────
+    # Désactive les APIs navigateur non utilisées par l'application
+    permissions_policy:
+        enabled: true
+        urls:
+            '^/.*':
+                camera: "'none'"
+                microphone: "'none'"
+                geolocation: "'none'"
+                payment: "'none'"
+                usb: "'none'"
+                fullscreen: 'self'
+
     # ── Content-Security-Policy ──────────────────────────────
-    # Restreint les sources autorisées pour scripts, styles, images, etc.
-    # Passe report_only à true pendant les tests pour ne pas bloquer,
-    # puis repasse à false une fois validé.
+    # Ce CSP s'applique à l'API back-end uniquement (pas au front Vercel).
+    # L'API ne sert pas de pages HTML avec scripts — unsafe-inline retiré.
     csp:
         enabled: true
         hosts: []
@@ -45,28 +55,19 @@ nelmio_security:
                 - 'self'
             script-src:
                 - 'self'
-                - 'cdn.jsdelivr.net'          # Bootstrap JS
-                - 'unsafe-inline'             # Bootstrap utilise des handlers inline
+                # unsafe-inline retiré — l'API ne sert pas de scripts inline
             style-src:
                 - 'self'
-                - 'cdn.jsdelivr.net'          # Bootstrap CSS
-                - 'fonts.googleapis.com'
-                - 'unsafe-inline'             # Bootstrap injecte des styles inline
+                - 'unsafe-inline'             # Symfony error pages utilisent du CSS inline
             font-src:
                 - 'self'
-                - 'fonts.gstatic.com'
-                - 'cdn.jsdelivr.net'          # Bootstrap Icons
             img-src:
                 - 'self'
                 - 'data:'
-                - 'https://vite-gourmand-back-chap.onrender.com'  # images API
-                - 'https://images.pexels.com'
-                - 'https://www.pexels.com'
             connect-src:
                 - 'self'
-                - 'https://vite-gourmand-back-chap.onrender.com'  # appels API
             frame-ancestors:
-                - 'none'                      # renforce l'anti-clickjacking
+                - 'none'
             form-action:
                 - 'self'
             object-src:

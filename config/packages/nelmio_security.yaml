@@ -18,12 +18,13 @@ nelmio_security:
             '^/.*': SAMEORIGIN
 
     # ── Strict-Transport-Security ─────────────────────────────
-    # Force HTTPS pendant 1 an — ne jamais activer sur un site sans HTTPS !
-    # Render utilise HTTPS → on peut l'activer en toute sécurité
-    forced_ssl:
-        enabled: true
-        hsts_max_age: 31536000      # 1 an en secondes
-        hsts_subdomains: true
+    # Note : forced_ssl désactivé car Render gère HTTPS en amont (proxy).
+    # Activer forced_ssl sur Render cause des boucles de redirection.
+    # Le header HSTS est envoyé par Render directement.
+    # forced_ssl:
+    #     enabled: true
+    #     hsts_max_age: 31536000
+    #     hsts_subdomains: true
 
     # ── Referrer-Policy ──────────────────────────────────────
     referrer_policy:

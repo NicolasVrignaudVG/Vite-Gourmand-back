@@ -54,6 +54,10 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private ?string $adresse = null;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['user:read'])]
+    private ?string $pseudonyme = null;
+
     #[ORM\Column]
     #[Groups(['user:read'])]
     private bool $actif = true;
@@ -107,6 +111,8 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setTelephone(?string $telephone): static { $this->telephone = $telephone; return $this; }
     public function getAdresse(): ?string { return $this->adresse; }
     public function setAdresse(?string $adresse): static { $this->adresse = $adresse; return $this; }
+    public function getPseudonyme(): ?string { return $this->pseudonyme; }
+    public function setPseudonyme(?string $pseudonyme): static { $this->pseudonyme = $pseudonyme; return $this; }
     public function isActif(): bool { return $this->actif; }
     public function setActif(bool $actif): static { $this->actif = $actif; return $this; }
     public function getRole(): ?Role { return $this->role; }

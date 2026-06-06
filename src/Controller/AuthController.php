@@ -63,6 +63,9 @@ class AuthController extends AbstractController
         $user->setPrenom(strip_tags(trim($data['prenom'] ?? '')));
         $user->setTelephone(preg_replace('/[^0-9+]/', '', $data['telephone'] ?? ''));
         $user->setAdresse(strip_tags(trim($data['adresse'] ?? '')));
+        // Pseudonyme public (optionnel) — affiché sur les avis à la place du nom réel
+        $pseudo = strip_tags(trim($data['pseudonyme'] ?? ''));
+        $user->setPseudonyme($pseudo ?: null);
         $user->setRole($role);
         $user->setPassword($this->hasher->hashPassword($user, $password));
 
@@ -161,10 +164,11 @@ class AuthController extends AbstractController
         $data = json_decode($request->getContent(), true) ?? [];
 
         // ── Sanitisation — strip_tags() sur tous les champs modifiables ──
-        if (isset($data['nom']))       $user->setNom(strip_tags(trim($data['nom'])));
-        if (isset($data['prenom']))    $user->setPrenom(strip_tags(trim($data['prenom'])));
-        if (isset($data['telephone'])) $user->setTelephone(preg_replace('/[^0-9+]/', '', $data['telephone']));
-        if (isset($data['adresse']))   $user->setAdresse(strip_tags(trim($data['adresse'])));
+        if (isset($data['nom']))        $user->setNom(strip_tags(trim($data['nom'])));
+        if (isset($data['prenom']))     $user->setPrenom(strip_tags(trim($data['prenom'])));
+        if (isset($data['telephone']))  $user->setTelephone(preg_replace('/[^0-9+]/', '', $data['telephone']));
+        if (isset($data['adresse']))    $user->setAdresse(strip_tags(trim($data['adresse'])));
+        if (isset($data['pseudonyme'])) $user->setPseudonyme(strip_tags(trim($data['pseudonyme'])) ?: null);
 
         if (!empty($data['password'])) {
             if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/', $data['password'])) {

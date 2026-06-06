@@ -27,7 +27,9 @@ class AvisController extends AbstractController
             'id'          => $a->getId(),
             'note'        => $a->getNote(),
             'description' => $a->getDescription(),
-            'auteur'      => $a->getUtilisateur()->getPrenom() . ' ' . substr($a->getUtilisateur()->getNom(), 0, 1) . '.',
+            // RGPD : pseudonyme stocké par l'utilisateur, ou "Client vérifié" par défaut.
+            // Ne jamais exposer le nom/prénom réel sur une route publique.
+            'auteur'      => $a->getUtilisateur()->getPseudonyme() ?: 'Client vérifié',
             'date'        => $a->getCreatedAt()->format('d/m/Y'),
         ], $avis));
     }

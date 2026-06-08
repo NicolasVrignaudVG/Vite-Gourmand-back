@@ -2,31 +2,26 @@
 
 nelmio_security:
 
-    # ── X-Content-Type-Options: nosniff ──────────────────────
     content_type:
         nosniff: true
 
-    # ── X-Frame-Options ──────────────────────────────────────
     clickjacking:
         paths:
             '^/.*': SAMEORIGIN
 
-    # ── Strict-Transport-Security (HSTS) ─────────────────────
-    # redirect: false = envoie le header sans rediriger HTTP→HTTPS
-    # (Render gère la redirection en amont, sinon boucle infinie)
+    # HSTS — redirect_status_code: 0 = envoie le header sans rediriger
+    # (Render gère déjà la redirection HTTP→HTTPS en amont)
     forced_ssl:
         enabled: true
-        redirect: false
         hsts_max_age: 31536000
         hsts_subdomains: true
+        redirect_status_code: 0
 
-    # ── Referrer-Policy ──────────────────────────────────────
     referrer_policy:
         enabled: true
         policies:
             - 'strict-origin-when-cross-origin'
 
-    # ── Permissions-Policy ───────────────────────────────────
     permissions_policy:
         enabled: true
         urls:
@@ -38,7 +33,6 @@ nelmio_security:
                 usb: "'none'"
                 fullscreen: 'self'
 
-    # ── Content-Security-Policy ──────────────────────────────
     csp:
         enabled: true
         hosts: []

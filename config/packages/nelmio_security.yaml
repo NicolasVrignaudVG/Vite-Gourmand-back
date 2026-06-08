@@ -9,20 +9,11 @@ nelmio_security:
         paths:
             '^/.*': SAMEORIGIN
 
-    # HSTS — redirect_status_code: 302 pour rediriger HTTP→HTTPS
-    # Render gère déjà HTTPS mais ce header indique aux navigateurs
-    # de toujours utiliser HTTPS (1 an)
-    forced_ssl:
-        hsts_max_age: 31536000
-        hsts_subdomains: true
-        redirect_status_code: 302
-
     referrer_policy:
         enabled: true
         policies:
             - 'strict-origin-when-cross-origin'
 
-    # Syntaxe officielle : policies avec listes vides = bloquer
     permissions_policy:
         enabled: true
         policies:

@@ -12,10 +12,10 @@ class HomeController extends AbstractController
     #[Route('/', methods: ['GET'])]
     public function index(): JsonResponse
     {
-        $response = $this->json([
+        return $this->json([
             'status'  => 'ok',
             'app'     => 'Vite & Gourmand API',
             'version' => '1.0.0',
         ]);
     }
-    
+}

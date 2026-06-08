@@ -9,29 +9,29 @@ nelmio_security:
         paths:
             '^/.*': SAMEORIGIN
 
-    # HSTS — redirect_status_code: 0 = envoie le header sans rediriger
-    # (Render gère déjà la redirection HTTP→HTTPS en amont)
+    # HSTS — redirect_status_code: 302 pour rediriger HTTP→HTTPS
+    # Render gère déjà HTTPS mais ce header indique aux navigateurs
+    # de toujours utiliser HTTPS (1 an)
     forced_ssl:
-        enabled: true
         hsts_max_age: 31536000
         hsts_subdomains: true
-        redirect_status_code: 0
+        redirect_status_code: 302
 
     referrer_policy:
         enabled: true
         policies:
             - 'strict-origin-when-cross-origin'
 
+    # Syntaxe officielle : policies avec listes vides = bloquer
     permissions_policy:
         enabled: true
-        urls:
-            '^/.*':
-                camera: "'none'"
-                microphone: "'none'"
-                geolocation: "'none'"
-                payment: "'none'"
-                usb: "'none'"
-                fullscreen: 'self'
+        policies:
+            camera: []
+            microphone: []
+            geolocation: []
+            payment: []
+            usb: []
+            fullscreen: ['self']
 
     csp:
         enabled: true

@@ -17,14 +17,5 @@ class HomeController extends AbstractController
             'app'     => 'Vite & Gourmand API',
             'version' => '1.0.0',
         ]);
-
-        // Header HSTS ajouté manuellement — forced_ssl cause des boucles
-        // de redirection sur Render car le proxy Render reçoit les requêtes en HTTP.
-        $response->headers->set(
-            'Strict-Transport-Security',
-            'max-age=31536000; includeSubDomains'
-        );
-
-        return $response;
     }
-}
+    

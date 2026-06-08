@@ -1,10 +1,5 @@
 <?php
 // src/Controller/HomeController.php
-// ─────────────────────────────────────────────────────────────────
-// Route racine — retourne un 200 avec un message de statut.
-// Nécessaire pour que les headers de sécurité HTTP soient présents
-// sur les scans de sécurité (securityheaders.com, etc.)
-// ─────────────────────────────────────────────────────────────────
 
 namespace App\Controller;
 
@@ -17,10 +12,19 @@ class HomeController extends AbstractController
     #[Route('/', methods: ['GET'])]
     public function index(): JsonResponse
     {
-        return $this->json([
+        $response = $this->json([
             'status'  => 'ok',
             'app'     => 'Vite & Gourmand API',
             'version' => '1.0.0',
         ]);
+
+        // Header HSTS ajouté manuellement — forced_ssl cause des boucles
+        // de redirection sur Render car le proxy Render reçoit les requêtes en HTTP.
+        $response->headers->set(
+            'Strict-Transport-Security',
+            'max-age=31536000; includeSubDomains'
+        );
+
+        return $response;
     }
 }

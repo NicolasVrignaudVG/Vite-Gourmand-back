@@ -74,6 +74,50 @@ class AvisController extends AbstractController
         return null;
     }
 
+    // GET /api/avis/all — tous les avis (admin)
+    #[Route('/all', methods: ['GET'])]
+    #[IsGranted('ROLE_EMPLOYE')]
+    public function all(): JsonResponse
+    {
+        $avis = $this->avisRepo->findBy([], ['createdAt' => 'DESC']);
+        return $this->json(array_map(fn($a) => [
+            'id'          => $a->getId(),
+            'note'        => $a->getNote(),
+            'description' => $a->getDescription(),
+            'auteur'      => $a->getUtilisateur()->getPrenom() . ' ' . $a->getUtilisateur()->getNom(),
+            'statut'      => $a->getStatut(),
+            'date'        => $a->getCreatedAt()->format('d/m/Y'),
+        ], $avis));
+    }
+
+    // DELETE /api/avis/{id} — supprimer un avis (admin)
+    #[Route('/{id}', methods: ['DELETE'])]
+    #[IsGranted('ROLE_EMPLOYE')]
+    public function delete(Avis $avis): JsonResponse
+    {
+        $this->em->remove($avis);
+        $this->em->flush();
+        return $this->json(['message' => 'Avis supprimé.']);
+    }
+
+    // PATCH /api/avis/{id} — modifier note/description (admin)
+    #[Route('/{id}', methods: ['PATCH'])]
+    #[IsGranted('ROLE_EMPLOYE')]
+    public function update(Avis $avis, Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        if (isset($data['note'])) {
+            $note = (int) $data['note'];
+            if ($note < 1 || $note > 5) return $this->json(['error' => 'Note invalide.'], 400);
+            $avis->setNote($note);
+        }
+        if (array_key_exists('description', $data)) {
+            $avis->setDescription(strip_tags($data['description'] ?? ''));
+        }
+        $this->em->flush();
+        return $this->json(['message' => 'Avis modifié.']);
+    }
+
     // PATCH /api/avis/{id}/valider — employé valide un avis
     #[Route('/{id}/valider', methods: ['PATCH'])]
     #[IsGranted('ROLE_EMPLOYE')]

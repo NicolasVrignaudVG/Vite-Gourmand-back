@@ -30,7 +30,7 @@ class AvisController extends AbstractController
             // RGPD : pseudonyme stocké par l'utilisateur, ou "Client vérifié" par défaut.
             // Ne jamais exposer le nom/prénom réel sur une route publique.
             'auteur'      => $a->getUtilisateur()->getPseudonyme() ?: 'Client vérifié',
-            'date'        => $a->getCreatedAt()->format('d/m/Y'),
+            'date'        => $a->getCreatedAt()->format('Y-m-d'),
         ], $avis));
     }
 
@@ -86,7 +86,7 @@ class AvisController extends AbstractController
             'description' => $a->getDescription(),
             'auteur'      => $a->getUtilisateur()->getPrenom() . ' ' . $a->getUtilisateur()->getNom(),
             'statut'      => $a->getStatut(),
-            'date'        => $a->getCreatedAt()->format('d/m/Y'),
+            'date'        => $a->getCreatedAt()->format('Y-m-d'),
         ], $avis));
     }
 
@@ -149,7 +149,7 @@ class AvisController extends AbstractController
             'note'        => $a->getNote(),
             'description' => $a->getDescription(),
             'auteur'      => $a->getUtilisateur()->getPrenom() . ' ' . $a->getUtilisateur()->getNom(),
-            'date'        => $a->getCreatedAt()->format('d/m/Y'),
+            'date'        => $a->getCreatedAt()->format('Y-m-d'),
         ], $avis));
     }
 }

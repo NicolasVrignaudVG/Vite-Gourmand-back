@@ -13,11 +13,11 @@ WORKDIR /var/www/html
 
 COPY . .
 
-RUN printf "APP_ENV=prod\nAPP_SECRET=placeholder\nDATABASE_URL=mysql://root:pass@localhost:3306/vite?serverVersion=8.0\nJWT_SECRET_KEY=/etc/secrets/private\nJWT_PUBLIC_KEY=/etc/secrets/public\nJWT_PASSPHRASE=\nMESSENGER_TRANSPORT_DSN=sync://\n" > .env
+RUN printf "APP_ENV=prod\nAPP_SECRET=\${APP_SECRET}\nDATABASE_URL=\${DATABASE_URL}\nJWT_SECRET_KEY=/etc/secrets/private\nJWT_PUBLIC_KEY=/etc/secrets/public\nJWT_PASSPHRASE=\${JWT_PASSPHRASE}\nMESSENGER_TRANSPORT_DSN=sync://\n" > .env
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs --no-scripts
 
-RUN mkdir -p var/cache/prod var/log config/jwt && chmod -R 777 var/
+RUN mkdir -p var/cache/prod var/log config/jwt && chmod -R 775 var/ && chown -R www-data:www-data var/
 
 # Configuration PHP pour l'upload de fichiers
 RUN echo "upload_tmp_dir = /tmp\nfile_uploads = On\nupload_max_filesize = 10M\npost_max_size = 12M\nmemory_limit = 256M" > /usr/local/etc/php/conf.d/uploads.ini

@@ -8,6 +8,7 @@ use App\Repository\UtilisateurRepository;
 use App\Service\MailerService;
 use App\Service\MongoService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -78,8 +79,11 @@ class AdminController extends AbstractController
     }
 
     // PATCH /api/admin/employes/{id}/toggle — activer/désactiver
-    #[Route('/employes/{id}/toggle', methods: ['PATCH'])]
-    public function toggleEmploye(Utilisateur $employe): JsonResponse
+    // Résolution explicite : {id} -> Utilisateur::find($id) via #[MapEntity(id: 'id')],
+    // indépendamment du nom de la variable PHP ($employe). Plus robuste qu'une résolution
+    // implicite face à un refactoring (renommage de variable, ajout d'un paramètre de route).
+    #[Route('/employes/{id}/toggle', methods: ['PATCH'], requirements: ['id' => '\d+'])]
+    public function toggleEmploye(#[MapEntity(id: 'id')] Utilisateur $employe): JsonResponse
     {
         $employe->setActif(!$employe->isActif());
         $this->em->flush();

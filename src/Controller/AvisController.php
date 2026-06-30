@@ -27,8 +27,6 @@ class AvisController extends AbstractController
             'id'          => $a->getId(),
             'note'        => $a->getNote(),
             'description' => $a->getDescription(),
-            // RGPD : pseudonyme stocké par l'utilisateur, ou "Client vérifié" par défaut.
-            // Ne jamais exposer le nom/prénom réel sur une route publique.
             'auteur'      => $a->getUtilisateur()->getPseudonyme() ?: 'Client vérifié',
             'date'        => $a->getCreatedAt()->format('Y-m-d'),
         ], $avis));
@@ -75,6 +73,7 @@ class AvisController extends AbstractController
     }
 
     // GET /api/avis/all — tous les avis (admin)
+    // Route littérale déclarée avant /{id} : aucune ambiguïté possible.
     #[Route('/all', methods: ['GET'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function all(): JsonResponse
@@ -90,8 +89,29 @@ class AvisController extends AbstractController
         ], $avis));
     }
 
+    // GET /api/avis/pending — avis en attente (employé)
+    // Route littérale déclarée avant /{id} : bonne pratique (chemins fixes avant chemins paramétrés).
+    #[Route('/pending', methods: ['GET'])]
+    #[IsGranted('ROLE_EMPLOYE')]
+    public function pending(): JsonResponse
+    {
+        $avis = $this->avisRepo->findBy(['statut' => 'en_attente'], ['createdAt' => 'DESC']);
+        return $this->json(array_map(fn($a) => [
+            'id'          => $a->getId(),
+            'note'        => $a->getNote(),
+            'description' => $a->getDescription(),
+            'auteur'      => $a->getUtilisateur()->getPrenom() . ' ' . $a->getUtilisateur()->getNom(),
+            'date'        => $a->getCreatedAt()->format('Y-m-d'),
+        ], $avis));
+    }
+
     // DELETE /api/avis/{id} — supprimer un avis (admin)
-    #[Route('/{id}', methods: ['DELETE'])]
+    // requirements: ['id' => '\d+'] empêche définitivement que "all" ou "pending"
+    // soient un jour interceptés par ce placeholder générique, quel que soit l'ordre de déclaration.
+    // ParamConverter (EntityValueResolver Symfony 6.2+) : {id} est résolu automatiquement
+    // en Avis $avis via un appel implicite à Avis::find($id), car le nom du paramètre
+    // de route "id" correspond au nom conventionnel attendu pour une entité Avis.
+    #[Route('/{id}', methods: ['DELETE'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function delete(Avis $avis): JsonResponse
     {
@@ -101,7 +121,7 @@ class AvisController extends AbstractController
     }
 
     // PATCH /api/avis/{id} — modifier note/description (admin)
-    #[Route('/{id}', methods: ['PATCH'])]
+    #[Route('/{id}', methods: ['PATCH'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function update(Avis $avis, Request $request): JsonResponse
     {
@@ -119,7 +139,7 @@ class AvisController extends AbstractController
     }
 
     // PATCH /api/avis/{id}/valider — employé valide un avis
-    #[Route('/{id}/valider', methods: ['PATCH'])]
+    #[Route('/{id}/valider', methods: ['PATCH'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function valider(Avis $avis): JsonResponse
     {
@@ -129,27 +149,12 @@ class AvisController extends AbstractController
     }
 
     // PATCH /api/avis/{id}/refuser — employé refuse un avis
-    #[Route('/{id}/refuser', methods: ['PATCH'])]
+    #[Route('/{id}/refuser', methods: ['PATCH'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function refuser(Avis $avis): JsonResponse
     {
         $avis->setStatut('refuse');
         $this->em->flush();
         return $this->json(['message' => 'Avis refusé.']);
-    }
-
-    // GET /api/avis/pending — avis en attente (employé)
-    #[Route('/pending', methods: ['GET'])]
-    #[IsGranted('ROLE_EMPLOYE')]
-    public function pending(): JsonResponse
-    {
-        $avis = $this->avisRepo->findBy(['statut' => 'en_attente'], ['createdAt' => 'DESC']);
-        return $this->json(array_map(fn($a) => [
-            'id'          => $a->getId(),
-            'note'        => $a->getNote(),
-            'description' => $a->getDescription(),
-            'auteur'      => $a->getUtilisateur()->getPrenom() . ' ' . $a->getUtilisateur()->getNom(),
-            'date'        => $a->getCreatedAt()->format('Y-m-d'),
-        ], $avis));
     }
 }

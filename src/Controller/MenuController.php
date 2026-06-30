@@ -19,6 +19,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class MenuController extends AbstractController
 {
     private const PATH_ID = '/{id}';
+    private const ID_REQUIREMENTS = ['id' => '\d+'];
 
     public function __construct(
         private EntityManagerInterface $em,
@@ -57,7 +58,7 @@ class MenuController extends AbstractController
     }
 
     // GET /api/menus/{id}
-    #[Route(self::PATH_ID, methods: ['GET'])]
+    #[Route(self::PATH_ID, methods: ['GET'], requirements: self::ID_REQUIREMENTS)]
     public function show(Menu $menu): JsonResponse
     {
         return $this->json($this->formatMenuDetail($menu));
@@ -77,7 +78,7 @@ class MenuController extends AbstractController
     }
 
     // PUT /api/menus/{id}
-    #[Route(self::PATH_ID, methods: ['PUT'])]
+    #[Route(self::PATH_ID, methods: ['PUT'], requirements: self::ID_REQUIREMENTS)]
     #[IsGranted('ROLE_EMPLOYE')]
     public function update(Menu $menu, Request $request): JsonResponse
     {
@@ -87,7 +88,7 @@ class MenuController extends AbstractController
     }
 
     // DELETE /api/menus/{id}
-    #[Route(self::PATH_ID, methods: ['DELETE'])]
+    #[Route(self::PATH_ID, methods: ['DELETE'], requirements: self::ID_REQUIREMENTS)]
     #[IsGranted('ROLE_EMPLOYE')]
     public function delete(Menu $menu): JsonResponse
     {
@@ -97,7 +98,7 @@ class MenuController extends AbstractController
     }
 
     // GET /api/menus/{id}/prix?nb_personnes=4
-    #[Route('/{id}/prix', methods: ['GET'])]
+    #[Route('/{id}/prix', methods: ['GET'], requirements: self::ID_REQUIREMENTS)]
     public function calculerPrix(Menu $menu, Request $request): JsonResponse
     {
         $nb = max($menu->getNombrePersonneMinimum(), (int) $request->query->get('nb_personnes', 1));
@@ -149,7 +150,7 @@ class MenuController extends AbstractController
     }
 
     // POST /api/menus/{id}/plats — associer des plats au menu
-    #[Route('/{id}/plats', methods: ['POST'])]
+    #[Route('/{id}/plats', methods: ['POST'], requirements: self::ID_REQUIREMENTS)]
     #[IsGranted('ROLE_EMPLOYE')]
     public function ajouterPlats(Menu $menu, Request $request): JsonResponse
     {
@@ -174,7 +175,7 @@ class MenuController extends AbstractController
     }
 
     // POST /api/menus/{id}/images — ajouter une image à la galerie
-    #[Route('/{id}/images', methods: ['POST'])]
+    #[Route('/{id}/images', methods: ['POST'], requirements: self::ID_REQUIREMENTS)]
     #[IsGranted('ROLE_EMPLOYE')]
     public function ajouterImage(Menu $menu, Request $request): JsonResponse
     {
@@ -203,7 +204,7 @@ class MenuController extends AbstractController
     }
 
     // DELETE /api/menus/{menuId}/images/{imgId} — supprimer une image de la galerie
-    #[Route('/{menuId}/images/{imgId}', methods: ['DELETE'])]
+    #[Route('/{menuId}/images/{imgId}', methods: ['DELETE'], requirements: ['menuId' => '\d+', 'imgId' => '\d+'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function supprimerImage(int $menuId, int $imgId): JsonResponse
     {

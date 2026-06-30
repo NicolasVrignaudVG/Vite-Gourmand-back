@@ -178,7 +178,7 @@ class CommandeController extends AbstractController
     }
 
     // PUT /api/commandes/{id} — modifier (si en_attente)
-    #[Route('/{id}', methods: ['PUT'])]
+    #[Route('/{id}', methods: ['PUT'], requirements: ['id' => '\d+'])]
     public function update(Commande $commande, Request $request): JsonResponse
     {
         if ($commande->getUtilisateur() !== $this->getUser()) {
@@ -231,7 +231,7 @@ class CommandeController extends AbstractController
     }
 
     // DELETE /api/commandes/{id} — annuler (si en_attente)
-    #[Route('/{id}', methods: ['DELETE'])]
+    #[Route('/{id}', methods: ['DELETE'], requirements: ['id' => '\d+'])]
     public function cancel(Commande $commande): JsonResponse
     {
         if ($commande->getUtilisateur() !== $this->getUser()) {
@@ -260,7 +260,7 @@ class CommandeController extends AbstractController
     }
 
     // PATCH /api/commandes/{id}/statut — employé met à jour le statut
-    #[Route('/{id}/statut', methods: ['PATCH'])]
+    #[Route('/{id}/statut', methods: ['PATCH'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function updateStatut(Commande $commande, Request $request): JsonResponse
     {

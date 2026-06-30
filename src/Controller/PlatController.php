@@ -76,7 +76,7 @@ class PlatController extends AbstractController
     }
 
     // PUT /api/plats/{id}
-    #[Route('/{id}', methods: ['PUT'])]
+    #[Route('/{id}', methods: ['PUT'], requirements: ['id' => '\d+'])]
     public function update(Plat $plat, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -105,7 +105,7 @@ class PlatController extends AbstractController
     }
 
     // DELETE /api/plats/{id}
-    #[Route('/{id}', methods: ['DELETE'])]
+    #[Route('/{id}', methods: ['DELETE'], requirements: ['id' => '\d+'])]
     public function delete(Plat $plat): JsonResponse
     {
         $this->em->remove($plat);

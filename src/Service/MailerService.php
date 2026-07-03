@@ -139,21 +139,22 @@ class MailerService
 
     public function sendResetPassword(Utilisateur $user, string $token): void
     {
-    $resetUrl = 'http://localhost:3000/index.html#reinitialiser-mdp?token=' . $token;
+        $resetUrl = 'https://vitegourmand33.vercel.app/#reinitialiser-mdp?token=' . $token;
 
-    $email = (new Email())
-        ->from('noreply@vitegourmand.fr')
-        ->to($user->getEmail())
-        ->subject('Réinitialisation de votre mot de passe — Vite & Gourmand')
-        ->html("
-            <h2>Réinitialisation de mot de passe</h2>
-            <p>Bonjour {$user->getPrenom()},</p>
-            <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
-            <p>Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe (valable 1 heure) :</p>
-            <p><a href='{$resetUrl}'>Réinitialiser mon mot de passe</a></p>
-            <p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.</p>
-        ");
-
-    $this->mailer->send($email);
+        $this->mailer->send(
+            $this->email()
+                ->to($user->getEmail())
+                ->subject('Réinitialisation de votre mot de passe — Vite & Gourmand')
+                ->html(sprintf(
+                    '<h2>Réinitialisation de mot de passe</h2>
+                     <p>Bonjour %s,</p>
+                     <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
+                     <p>Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe (valable 1 heure) :</p>
+                     <p><a href="%s">Réinitialiser mon mot de passe</a></p>
+                     <p>Si vous n\'êtes pas à l\'origine de cette demande, ignorez cet e-mail.</p>',
+                    htmlspecialchars($user->getPrenom()),
+                    htmlspecialchars($resetUrl)
+                ))
+        );
     }
 }

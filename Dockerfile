@@ -33,7 +33,10 @@ RUN printf "ServerName localhost\n\
 </IfModule>\n" > /etc/apache2/conf-available/limits.conf \
     && a2enconf limits
 
-RUN echo '<VirtualHost *:80>\n\
+RUN echo "Listen 10000" >> /etc/apache2/ports.conf \
+    && sed -i 's/Listen 80//' /etc/apache2/ports.conf
+
+RUN echo '<VirtualHost *:10000>\n\
     DocumentRoot /var/www/html/public\n\
     <Directory /var/www/html/public>\n\
         AllowOverride All\n\
@@ -44,7 +47,7 @@ RUN echo '<VirtualHost *:80>\n\
 
 RUN chown -R www-data:www-data /var/www/html
 
-EXPOSE 80
+EXPOSE 10000
 
 CMD bash -c "\
     rm -rf /var/www/html/var/cache/prod && \

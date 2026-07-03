@@ -36,7 +36,7 @@ class JwtCookieSuccessHandler implements AuthenticationSuccessHandlerInterface
             ->withPath('/')
             ->withSecure(true)
             ->withHttpOnly(true)
-            ->withSameSite('None');
+            ->withSameSite('Lax');
 
         // Cookie Refresh — 30j, HttpOnly, Secure, chemin restreint /api/auth
         $refreshCookie = Cookie::create('refresh_token')
@@ -45,7 +45,7 @@ class JwtCookieSuccessHandler implements AuthenticationSuccessHandlerInterface
             ->withPath('/api/auth')
             ->withSecure(true)
             ->withHttpOnly(true)
-            ->withSameSite('None');
+            ->withSameSite('Lax');
 
         $response = new JsonResponse([
             'message' => 'Connexion réussie.',

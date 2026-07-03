@@ -35,7 +35,7 @@ class AuthController extends AbstractController
     #[Route('/register', methods: ['POST'])]
     public function register(Request $request): JsonResponse
     {
-        $limiter = $this->registerLimiter->create($request->getClientIp());
+        $limiter = $this->registerLimiter->create((string) ($request->getClientIp() ?? 'unknown'));
         if (!$limiter->consume(1)->isAccepted()) {
             return $this->json(['error' => 'Trop de tentatives. Veuillez réessayer dans quelques minutes.'], 429);
         }
@@ -105,7 +105,7 @@ class AuthController extends AbstractController
     #[Route('/forgot-password', methods: ['POST'])]
     public function forgotPassword(Request $request): JsonResponse
     {
-        $limiter = $this->forgotPasswordLimiter->create($request->getClientIp());
+        $limiter = $this->forgotPasswordLimiter->create((string) ($request->getClientIp() ?? 'unknown'));
         if (!$limiter->consume(1)->isAccepted()) {
             return $this->json(['error' => 'Trop de tentatives. Veuillez réessayer dans quelques minutes.'], 429);
         }

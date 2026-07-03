@@ -35,7 +35,7 @@ class AvisController extends AbstractController
         ], $avis));
     }
 
-    #[OA\Post(path: '/api/avis', summary: 'Soumettre un avis (ROLE_USER)',
+    #[OA\Post(path: '/api/avis', summary: "Soumettre un avis (ROLE_USER)",
         security: [['cookieAuth' => []]],
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
             required: ['commande_id','note'],
@@ -46,7 +46,7 @@ class AvisController extends AbstractController
             ]
         )),
         responses: [
-            new OA\Response(response: 201, description: 'Avis soumis, en attente de validation'),
+            new OA\Response(response: 201, description: "Avis soumis, en attente de validation"),
             new OA\Response(response: 400, description: 'Commande invalide ou non terminée'),
             new OA\Response(response: 401, description: 'Non authentifié'),
         ])]

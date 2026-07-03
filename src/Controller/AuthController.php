@@ -36,7 +36,7 @@ class AuthController extends AbstractController
     // ── POST /api/auth/register ──────────────────────────────
     #[OA\Post(
         path: '/api/auth/register',
-        summary: 'Inscription d\'un nouvel utilisateur',
+        summary: "Inscription d'un nouvel utilisateur",
         requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
             required: ['nom','prenom','email','password'],
             properties: [
@@ -108,7 +108,7 @@ class AuthController extends AbstractController
     // ── GET /api/auth/me ─────────────────────────────────────
     #[OA\Get(
         path: '/api/auth/me',
-        summary: 'Récupérer le profil de l\'utilisateur connecté',
+        summary: "Recuperer le profil de l'utilisateur connecte",
         security: [['cookieAuth' => []]],
         responses: [
             new OA\Response(response: 200, description: 'Profil utilisateur'),

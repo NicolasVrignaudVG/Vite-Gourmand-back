@@ -69,7 +69,7 @@ class MenuController extends AbstractController
     }
 
     // GET /api/menus/{id}
-    #[OA\Get(path: '/api/menus/{id}', summary: 'Détail d'un menu',
+    #[OA\Get(path: '/api/menus/{id}', summary: "Detail d'un menu",
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new OA\Response(response: 200, description: 'Détail du menu'),
@@ -82,7 +82,7 @@ class MenuController extends AbstractController
     }
 
     // POST /api/menus
-    #[OA\Post(path: '/api/menus', summary: 'Créer un menu (ROLE_EMPLOYE)',
+    #[OA\Post(path: '/api/menus', summary: "Creer un menu (ROLE_EMPLOYE)",
         security: [['cookieAuth' => []]],
         responses: [
             new OA\Response(response: 201, description: 'Menu créé'),
@@ -101,7 +101,7 @@ class MenuController extends AbstractController
     }
 
     // PUT /api/menus/{id}
-    #[OA\Put(path: '/api/menus/{id}', summary: 'Modifier un menu (ROLE_EMPLOYE)',
+    #[OA\Put(path: '/api/menus/{id}', summary: "Modifier un menu (ROLE_EMPLOYE)",
         security: [['cookieAuth' => []]],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [new OA\Response(response: 200, description: 'Menu mis à jour')])]
@@ -115,7 +115,7 @@ class MenuController extends AbstractController
     }
 
     // DELETE /api/menus/{id}
-    #[OA\Delete(path: '/api/menus/{id}', summary: 'Désactiver un menu (ROLE_EMPLOYE)',
+    #[OA\Delete(path: '/api/menus/{id}', summary: "Desactiver un menu (ROLE_EMPLOYE)",
         security: [['cookieAuth' => []]],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [new OA\Response(response: 200, description: 'Menu désactivé')])]
@@ -129,7 +129,7 @@ class MenuController extends AbstractController
     }
 
     // GET /api/menus/{id}/prix?nb_personnes=4
-    #[OA\Get(path: '/api/menus/{id}/prix', summary: 'Calculer le prix pour N personnes',
+    #[OA\Get(path: '/api/menus/{id}/prix', summary: "Calculer le prix pour N personnes",
         parameters: [
             new OA\Parameter(name: 'id',              in: 'path',  required: true,  schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'nombre_personnes', in: 'query', required: true,  schema: new OA\Schema(type: 'integer')),

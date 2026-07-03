@@ -27,7 +27,7 @@ class CommandeController extends AbstractController
     // GET /api/commandes — mes commandes
     #[OA\Get(path: '/api/commandes', summary: 'Mes commandes (ROLE_USER)',
         security: [['cookieAuth' => []]],
-        responses: [new OA\Response(response: 200, description: 'Liste des commandes de l'utilisateur connecté')])]
+        responses: [new OA\Response(response: 200, description: "Liste des commandes de l'utilisateur connecte")])]
     #[Route('', methods: ['GET'])]
     public function index(): JsonResponse
     {

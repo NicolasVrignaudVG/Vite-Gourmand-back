@@ -154,6 +154,40 @@ class AuthController extends AbstractController
         return $this->json(['message' => 'Mot de passe réinitialisé avec succès.']);
     }
 
+    // ── DELETE /api/auth/me — supprimer son compte (RGPD) ───
+    #[Route('/me', methods: ['DELETE'])]
+    public function deleteMe(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) return $this->json(['error' => 'Non authentifié.'], 401);
+
+        // Révoquer le refresh token
+        $refreshTokenValue = $request->cookies->get('refresh_token');
+        if ($refreshTokenValue) {
+            $refreshToken = $this->em->getRepository(RefreshToken::class)
+                ->findOneBy(['token' => $refreshTokenValue]);
+            if ($refreshToken) $this->em->remove($refreshToken);
+        }
+
+        // Supprimer les avis liés (contrainte nullable:false sur utilisateur_id)
+        // Alternative RGPD : modifier la contrainte en nullable:true + anonymisation
+        foreach ($user->getAvis() as $avis) {
+            $this->em->remove($avis);
+        }
+
+        $this->em->remove($user);
+        $this->em->flush();
+
+        // Supprimer les cookies
+        $response = $this->json(['message' => 'Votre compte a été supprimé.']);
+        foreach (['jwt_token' => '/', 'refresh_token' => '/api/auth'] as $name => $path) {
+            $response->headers->setCookie(Cookie::create($name)->withValue('')
+                ->withExpires(time() - 3600)->withPath($path)
+                ->withSecure(true)->withHttpOnly(true)->withSameSite('None'));
+        }
+        return $response;
+    }
+
     // ── PUT /api/auth/me ─────────────────────────────────────
     #[Route('/me', methods: ['PUT'])]
     public function updateMe(Request $request): JsonResponse

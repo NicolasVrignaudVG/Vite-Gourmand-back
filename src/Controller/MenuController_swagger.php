@@ -12,9 +12,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use OpenApi\Attributes as OA;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[OA\Tag(name: 'Menus')]
 #[Route('/api/menus')]
 class MenuController extends AbstractController
 {
@@ -27,6 +29,15 @@ class MenuController extends AbstractController
     ) {}
 
     // GET /api/menus
+    #[OA\Get(path: '/api/menus', summary: 'Lister les menus (filtres disponibles)',
+        parameters: [
+            new OA\Parameter(name: 'prix_max',      in: 'query', schema: new OA\Schema(type: 'number')),
+            new OA\Parameter(name: 'prix_min',      in: 'query', schema: new OA\Schema(type: 'number')),
+            new OA\Parameter(name: 'theme',         in: 'query', schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'regime',        in: 'query', schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'nb_personnes',  in: 'query', schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Liste des menus actifs')])]
     #[Route('', methods: ['GET'])]
     public function index(Request $request): JsonResponse
     {
@@ -58,6 +69,12 @@ class MenuController extends AbstractController
     }
 
     // GET /api/menus/{id}
+    #[OA\Get(path: '/api/menus/{id}', summary: 'Détail d'un menu',
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        responses: [
+            new OA\Response(response: 200, description: 'Détail du menu'),
+            new OA\Response(response: 404, description: 'Menu introuvable'),
+        ])]
     #[Route(self::PATH_ID, methods: ['GET'], requirements: self::ID_REQUIREMENTS)]
     public function show(Menu $menu): JsonResponse
     {
@@ -65,6 +82,12 @@ class MenuController extends AbstractController
     }
 
     // POST /api/menus
+    #[OA\Post(path: '/api/menus', summary: 'Créer un menu (ROLE_EMPLOYE)',
+        security: [['cookieAuth' => []]],
+        responses: [
+            new OA\Response(response: 201, description: 'Menu créé'),
+            new OA\Response(response: 400, description: 'Données invalides'),
+        ])]
     #[Route('', methods: ['POST'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function create(Request $request): JsonResponse
@@ -78,6 +101,10 @@ class MenuController extends AbstractController
     }
 
     // PUT /api/menus/{id}
+    #[OA\Put(path: '/api/menus/{id}', summary: 'Modifier un menu (ROLE_EMPLOYE)',
+        security: [['cookieAuth' => []]],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        responses: [new OA\Response(response: 200, description: 'Menu mis à jour')])]
     #[Route(self::PATH_ID, methods: ['PUT'], requirements: self::ID_REQUIREMENTS)]
     #[IsGranted('ROLE_EMPLOYE')]
     public function update(Menu $menu, Request $request): JsonResponse
@@ -88,6 +115,10 @@ class MenuController extends AbstractController
     }
 
     // DELETE /api/menus/{id}
+    #[OA\Delete(path: '/api/menus/{id}', summary: 'Désactiver un menu (ROLE_EMPLOYE)',
+        security: [['cookieAuth' => []]],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        responses: [new OA\Response(response: 200, description: 'Menu désactivé')])]
     #[Route(self::PATH_ID, methods: ['DELETE'], requirements: self::ID_REQUIREMENTS)]
     #[IsGranted('ROLE_EMPLOYE')]
     public function delete(Menu $menu): JsonResponse
@@ -98,6 +129,12 @@ class MenuController extends AbstractController
     }
 
     // GET /api/menus/{id}/prix?nb_personnes=4
+    #[OA\Get(path: '/api/menus/{id}/prix', summary: 'Calculer le prix pour N personnes',
+        parameters: [
+            new OA\Parameter(name: 'id',              in: 'path',  required: true,  schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'nombre_personnes', in: 'query', required: true,  schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Prix calculé avec remise éventuelle')])]
     #[Route('/{id}/prix', methods: ['GET'], requirements: self::ID_REQUIREMENTS)]
     public function calculerPrix(Menu $menu, Request $request): JsonResponse
     {

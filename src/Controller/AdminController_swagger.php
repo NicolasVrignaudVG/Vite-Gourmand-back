@@ -13,9 +13,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use OpenApi\Attributes as OA;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[OA\Tag(name: 'Administration')]
 #[Route('/api/admin')]
 #[IsGranted('ROLE_ADMIN')]
 class AdminController extends AbstractController
@@ -29,6 +31,9 @@ class AdminController extends AbstractController
     ) {}
 
     // GET /api/admin/employes — liste des employés
+    #[OA\Get(path: '/api/admin/employes', summary: 'Lister les employés (ROLE_ADMIN)',
+        security: [['cookieAuth' => []]],
+        responses: [new OA\Response(response: 200, description: 'Liste des employés')])]
     #[Route('/employes', methods: ['GET'])]
     public function listEmployes(): JsonResponse
     {
@@ -45,6 +50,21 @@ class AdminController extends AbstractController
     }
 
     // POST /api/admin/employes — créer un compte employé
+    #[OA\Post(path: '/api/admin/employes', summary: 'Créer un compte employé (ROLE_ADMIN)',
+        security: [['cookieAuth' => []]],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            required: ['nom','prenom','email','password'],
+            properties: [
+                new OA\Property(property: 'nom',      type: 'string'),
+                new OA\Property(property: 'prenom',   type: 'string'),
+                new OA\Property(property: 'email',    type: 'string', format: 'email'),
+                new OA\Property(property: 'password', type: 'string'),
+            ]
+        )),
+        responses: [
+            new OA\Response(response: 201, description: 'Employé créé'),
+            new OA\Response(response: 400, description: 'Email déjà utilisé'),
+        ])]
     #[Route('/employes', methods: ['POST'])]
     public function createEmploye(Request $request): JsonResponse
     {
@@ -95,6 +115,14 @@ class AdminController extends AbstractController
     }
 
     // GET /api/admin/stats — statistiques commandes (MongoDB)
+    #[OA\Get(path: '/api/admin/stats', summary: 'Statistiques de vente (ROLE_ADMIN)',
+        security: [['cookieAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'menu_id',    in: 'query', schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'date_debut', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'date_fin',   in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Statistiques par menu (MongoDB)')])]
     #[Route('/stats', methods: ['GET'])]
     public function stats(Request $request): JsonResponse
     {

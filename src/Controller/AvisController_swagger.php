@@ -7,18 +7,21 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use OpenApi\Attributes as OA;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 // ═══════════════════════════════════════════════════════════
 // AVIS
 // ═══════════════════════════════════════════════════════════
+#[OA\Tag(name: 'Avis clients')]
 #[Route('/api/avis')]
 class AvisController extends AbstractController
 {
     public function __construct(private EntityManagerInterface $em, private AvisRepository $avisRepo) {}
 
-    // GET /api/avis — avis validés (public)
+    #[OA\Get(path: '/api/avis', summary: 'Lister les avis validés (public)',
+        responses: [new OA\Response(response: 200, description: 'Liste des avis validés')])]
     #[Route('', methods: ['GET'])]
     public function index(): JsonResponse
     {
@@ -32,7 +35,21 @@ class AvisController extends AbstractController
         ], $avis));
     }
 
-    // POST /api/avis — laisser un avis (utilisateur connecté)
+    #[OA\Post(path: '/api/avis', summary: 'Soumettre un avis (ROLE_USER)',
+        security: [['cookieAuth' => []]],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            required: ['commande_id','note'],
+            properties: [
+                new OA\Property(property: 'commande_id',  type: 'integer'),
+                new OA\Property(property: 'note',         type: 'integer', minimum: 1, maximum: 5),
+                new OA\Property(property: 'description',  type: 'string'),
+            ]
+        )),
+        responses: [
+            new OA\Response(response: 201, description: 'Avis soumis, en attente de validation'),
+            new OA\Response(response: 400, description: 'Commande invalide ou non terminée'),
+            new OA\Response(response: 401, description: 'Non authentifié'),
+        ])]
     #[Route('', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function create(Request $request): JsonResponse
@@ -74,6 +91,9 @@ class AvisController extends AbstractController
 
     // GET /api/avis/all — tous les avis (admin)
     // Route littérale déclarée avant /{id} : aucune ambiguïté possible.
+    #[OA\Get(path: '/api/avis/all', summary: 'Tous les avis (ROLE_EMPLOYE)',
+        security: [['cookieAuth' => []]],
+        responses: [new OA\Response(response: 200, description: 'Tous les avis')])]
     #[Route('/all', methods: ['GET'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function all(): JsonResponse
@@ -91,6 +111,9 @@ class AvisController extends AbstractController
 
     // GET /api/avis/pending — avis en attente (employé)
     // Route littérale déclarée avant /{id} : bonne pratique (chemins fixes avant chemins paramétrés).
+    #[OA\Get(path: '/api/avis/pending', summary: 'Avis en attente (ROLE_EMPLOYE)',
+        security: [['cookieAuth' => []]],
+        responses: [new OA\Response(response: 200, description: 'Avis en attente')])]
     #[Route('/pending', methods: ['GET'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function pending(): JsonResponse

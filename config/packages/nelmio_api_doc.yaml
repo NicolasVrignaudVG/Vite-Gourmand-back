@@ -1,0 +1,28 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: Vite & Gourmand — API REST
+            description: |
+                API REST du traiteur bordelais Vite & Gourmand.
+                
+                ## Authentification
+                L'API utilise des cookies JWT HttpOnly. Connectez-vous via `POST /api/auth/login`
+                pour obtenir automatiquement le cookie `jwt_token` (valable 1h).
+                
+                ## Rôles
+                - `ROLE_USER` : client connecté
+                - `ROLE_EMPLOYE` : employé (hérite de ROLE_USER)
+                - `ROLE_ADMIN` : administrateur (hérite de ROLE_EMPLOYE)
+            version: 1.0.0
+        components:
+            securitySchemes:
+                cookieAuth:
+                    type: apiKey
+                    in: cookie
+                    name: jwt_token
+                    description: Cookie JWT HttpOnly posé automatiquement après connexion
+        security:
+            - cookieAuth: []
+    areas:
+        path_patterns:
+            - ^/api(?!/doc$)

@@ -14,9 +14,11 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
+use OpenApi\Attributes as OA;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+#[OA\Tag(name: 'Authentification')]
 #[Route('/api/auth')]
 class AuthController extends AbstractController
 {
@@ -32,6 +34,27 @@ class AuthController extends AbstractController
     ) {}
 
     // ── POST /api/auth/register ──────────────────────────────
+    #[OA\Post(
+        path: '/api/auth/register',
+        summary: 'Inscription d\'un nouvel utilisateur',
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            required: ['nom','prenom','email','password'],
+            properties: [
+                new OA\Property(property: 'nom',        type: 'string',  example: 'Dupont'),
+                new OA\Property(property: 'prenom',     type: 'string',  example: 'Marie'),
+                new OA\Property(property: 'email',      type: 'string',  format: 'email', example: 'marie@example.fr'),
+                new OA\Property(property: 'telephone',  type: 'string',  example: '0612345678'),
+                new OA\Property(property: 'adresse',    type: 'string',  example: '12 rue de la Paix, Bordeaux'),
+                new OA\Property(property: 'password',   type: 'string',  example: 'MonMotDePasse@1'),
+                new OA\Property(property: 'pseudonyme', type: 'string',  example: 'Marie B.'),
+            ]
+        )),
+        responses: [
+            new OA\Response(response: 201, description: 'Compte créé avec succès'),
+            new OA\Response(response: 400, description: 'Données invalides'),
+            new OA\Response(response: 429, description: 'Trop de tentatives'),
+        ]
+    )]
     #[Route('/register', methods: ['POST'])]
     public function register(Request $request): JsonResponse
     {
@@ -83,6 +106,15 @@ class AuthController extends AbstractController
     }
 
     // ── GET /api/auth/me ─────────────────────────────────────
+    #[OA\Get(
+        path: '/api/auth/me',
+        summary: 'Récupérer le profil de l\'utilisateur connecté',
+        security: [['cookieAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Profil utilisateur'),
+            new OA\Response(response: 401, description: 'Non authentifié'),
+        ]
+    )]
     #[Route('/me', methods: ['GET'])]
     public function me(): JsonResponse
     {
@@ -102,6 +134,18 @@ class AuthController extends AbstractController
     }
 
     // ── POST /api/auth/forgot-password ───────────────────────
+    #[OA\Post(
+        path: '/api/auth/forgot-password',
+        summary: 'Demande de réinitialisation de mot de passe',
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            required: ['email'],
+            properties: [new OA\Property(property: 'email', type: 'string', format: 'email')]
+        )),
+        responses: [
+            new OA\Response(response: 200, description: 'E-mail envoyé si le compte existe'),
+            new OA\Response(response: 429, description: 'Trop de tentatives'),
+        ]
+    )]
     #[Route('/forgot-password', methods: ['POST'])]
     public function forgotPassword(Request $request): JsonResponse
     {
@@ -129,6 +173,21 @@ class AuthController extends AbstractController
     }
 
     // ── POST /api/auth/reset-password ────────────────────────
+    #[OA\Post(
+        path: '/api/auth/reset-password',
+        summary: 'Réinitialiser le mot de passe avec un token',
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            required: ['token','password'],
+            properties: [
+                new OA\Property(property: 'token',    type: 'string'),
+                new OA\Property(property: 'password', type: 'string', example: 'NouveauMotDePasse@1'),
+            ]
+        )),
+        responses: [
+            new OA\Response(response: 200, description: 'Mot de passe réinitialisé'),
+            new OA\Response(response: 400, description: 'Token invalide ou expiré'),
+        ]
+    )]
     #[Route('/reset-password', methods: ['POST'])]
     public function resetPassword(Request $request): JsonResponse
     {
@@ -155,6 +214,15 @@ class AuthController extends AbstractController
     }
 
     // ── DELETE /api/auth/me — supprimer son compte (RGPD) ───
+    #[OA\Delete(
+        path: '/api/auth/me',
+        summary: 'Supprimer son compte (RGPD)',
+        security: [['cookieAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Compte supprimé'),
+            new OA\Response(response: 401, description: 'Non authentifié'),
+        ]
+    )]
     #[Route('/me', methods: ['DELETE'])]
     public function deleteMe(Request $request): JsonResponse
     {
@@ -189,6 +257,25 @@ class AuthController extends AbstractController
     }
 
     // ── PUT /api/auth/me ─────────────────────────────────────
+    #[OA\Put(
+        path: '/api/auth/me',
+        summary: 'Modifier son profil',
+        security: [['cookieAuth' => []]],
+        requestBody: new OA\RequestBody(content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'nom',       type: 'string'),
+                new OA\Property(property: 'prenom',    type: 'string'),
+                new OA\Property(property: 'telephone', type: 'string'),
+                new OA\Property(property: 'adresse',   type: 'string'),
+                new OA\Property(property: 'password',  type: 'string', description: 'Laisser vide pour ne pas changer'),
+            ]
+        )),
+        responses: [
+            new OA\Response(response: 200, description: 'Profil mis à jour'),
+            new OA\Response(response: 400, description: 'Données invalides'),
+            new OA\Response(response: 401, description: 'Non authentifié'),
+        ]
+    )]
     #[Route('/me', methods: ['PUT'])]
     public function updateMe(Request $request): JsonResponse
     {
@@ -224,6 +311,14 @@ class AuthController extends AbstractController
     }
 
     // ── POST /api/auth/refresh ───────────────────────────────
+    #[OA\Post(
+        path: '/api/auth/refresh',
+        summary: 'Renouveler le JWT via le refresh token (cookie)',
+        responses: [
+            new OA\Response(response: 200, description: 'Nouveaux cookies JWT et refresh posés'),
+            new OA\Response(response: 401, description: 'Refresh token invalide ou expiré'),
+        ]
+    )]
     #[Route('/refresh', methods: ['POST'])]
     public function refresh(Request $request): JsonResponse
     {
@@ -272,6 +367,14 @@ class AuthController extends AbstractController
     }
 
     // ── POST /api/auth/logout ────────────────────────────────
+    #[OA\Post(
+        path: '/api/auth/logout',
+        summary: 'Déconnexion — suppression des cookies JWT',
+        security: [['cookieAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Déconnecté avec succès'),
+        ]
+    )]
     #[Route('/logout', methods: ['POST'])]
     public function logout(Request $request): JsonResponse
     {

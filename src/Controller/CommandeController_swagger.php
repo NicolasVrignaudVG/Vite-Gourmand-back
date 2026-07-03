@@ -9,9 +9,11 @@ use App\Service\DeliveryService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use OpenApi\Attributes as OA;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[OA\Tag(name: 'Commandes')]
 #[Route('/api/commandes')]
 #[IsGranted('ROLE_USER')]
 class CommandeController extends AbstractController
@@ -23,6 +25,9 @@ class CommandeController extends AbstractController
     ) {}
 
     // GET /api/commandes — mes commandes
+    #[OA\Get(path: '/api/commandes', summary: 'Mes commandes (ROLE_USER)',
+        security: [['cookieAuth' => []]],
+        responses: [new OA\Response(response: 200, description: 'Liste des commandes de l'utilisateur connecté')])]
     #[Route('', methods: ['GET'])]
     public function index(): JsonResponse
     {
@@ -32,6 +37,9 @@ class CommandeController extends AbstractController
     }
 
     // GET /api/commandes/toutes — toutes les commandes (employé)
+    #[OA\Get(path: '/api/commandes/toutes', summary: 'Toutes les commandes (ROLE_EMPLOYE)',
+        security: [['cookieAuth' => []]],
+        responses: [new OA\Response(response: 200, description: 'Toutes les commandes')])]
     #[Route('/toutes', methods: ['GET'])]
     #[IsGranted('ROLE_EMPLOYE')]
     public function toutesCommandes(): JsonResponse
@@ -44,6 +52,21 @@ class CommandeController extends AbstractController
     // Le contrôleur se limite à décoder la requête, déléguer la logique métier
     // au CommandeService, et formater la réponse — conformément aux bonnes
     // pratiques MVC (éviter le Fat Controller).
+    #[OA\Post(path: '/api/commandes', summary: 'Passer une commande (ROLE_USER)',
+        security: [['cookieAuth' => []]],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'menus_commandes',  type: 'array', items: new OA\Items(type: 'object')),
+                new OA\Property(property: 'date_prestation',  type: 'string', format: 'date-time'),
+                new OA\Property(property: 'adresse_livraison',type: 'string'),
+                new OA\Property(property: 'ville_livraison',  type: 'string'),
+                new OA\Property(property: 'cp_livraison',     type: 'string'),
+            ]
+        )),
+        responses: [
+            new OA\Response(response: 201, description: 'Commande créée'),
+            new OA\Response(response: 400, description: 'Données invalides'),
+        ])]
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
@@ -59,6 +82,13 @@ class CommandeController extends AbstractController
     }
 
     // GET /api/commandes/livraison — calcul frais livraison
+    #[OA\Get(path: '/api/commandes/livraison', summary: 'Calculer les frais de livraison',
+        parameters: [
+            new OA\Parameter(name: 'adresse', in: 'query', required: true, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'ville',   in: 'query', required: true, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'cp',      in: 'query', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Frais de livraison calculés')])]
     #[Route('/livraison', methods: ['GET'])]
     public function calculerLivraison(Request $request): JsonResponse
     {

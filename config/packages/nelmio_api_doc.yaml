@@ -9,10 +9,14 @@ nelmio_api_doc:
                 L'API utilise des cookies JWT HttpOnly. Connectez-vous via `POST /api/auth/login`
                 pour obtenir automatiquement le cookie `jwt_token` (valable 1h).
                 
-                ## Rôles
+                ## Rôles disponibles
                 - `ROLE_USER` : client connecté
-                - `ROLE_EMPLOYE` : employé (hérite de ROLE_USER)
+                - `ROLE_EMPLOYE` : employé (hérite de ROLE_USER)  
                 - `ROLE_ADMIN` : administrateur (hérite de ROLE_EMPLOYE)
+                
+                ## Identifiants de test
+                - Admin : admin@vitegourmand.fr / Admin@1234
+                - Employé : employe@vitegourmand.fr / Employe@1234
             version: 1.0.0
         components:
             securitySchemes:

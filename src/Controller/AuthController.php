@@ -183,7 +183,7 @@ class AuthController extends AbstractController
         foreach (['jwt_token' => '/', 'refresh_token' => '/api/auth'] as $name => $path) {
             $response->headers->setCookie(Cookie::create($name)->withValue('')
                 ->withExpires(time() - 3600)->withPath($path)
-                ->withSecure(true)->withHttpOnly(true)->withSameSite('None'));
+                ->withSecure(true)->withHttpOnly(true)->withSameSite('Lax'));
         }
         return $response;
     }
@@ -251,11 +251,11 @@ class AuthController extends AbstractController
 
         $jwtCookie = Cookie::create('jwt_token')
             ->withValue($jwtToken)->withExpires(time() + 3600)
-            ->withPath('/')->withSecure(true)->withHttpOnly(true)->withSameSite('None');
+            ->withPath('/')->withSecure(true)->withHttpOnly(true)->withSameSite('Lax');
 
         $refreshCookie = Cookie::create('refresh_token')
             ->withValue($newRefreshToken->getToken())->withExpires(time() + 30 * 24 * 3600)
-            ->withPath('/api/auth')->withSecure(true)->withHttpOnly(true)->withSameSite('None');
+            ->withPath('/api/auth')->withSecure(true)->withHttpOnly(true)->withSameSite('Lax');
 
         $response = new JsonResponse(['message' => 'Token renouvelé.', 'user' => [
             'id'        => $user->getId(),
@@ -289,7 +289,7 @@ class AuthController extends AbstractController
         foreach (['jwt_token' => '/', 'refresh_token' => '/api/auth'] as $name => $path) {
             $response->headers->setCookie(Cookie::create($name)->withValue('')
                 ->withExpires(time() - 3600)->withPath($path)
-                ->withSecure(true)->withHttpOnly(true)->withSameSite('None'));
+                ->withSecure(true)->withHttpOnly(true)->withSameSite('Lax'));
         }
 
         return $response;

@@ -190,6 +190,10 @@ class CommandeController extends AbstractController
                 'prixTotal'       => $cm->getPrixTotal(),
                 'remise'          => $cm->getRemise(),
             ], $c->getCommandeMenus()->toArray()),
+            'plats'            => array_map(fn($cp) => [
+                'nom'      => $cp->getPlat()?->getNom(),
+                'type'     => $cp->getPlat()?->getTypePlat(),
+            ], $c->getCommandePlats()->toArray()),
             'utilisateur'      => $c->getUtilisateur() ? [
                 'id'        => $c->getUtilisateur()->getId(),
                 'nom'       => $c->getUtilisateur()->getNom(),

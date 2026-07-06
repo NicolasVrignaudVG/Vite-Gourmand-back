@@ -38,14 +38,14 @@ INSERT INTO allergene (id, libelle) VALUES
     (9, 'Soja'),
     (10, 'Arachides');
 
--- Utilisateurs (mot de passe = "Admin1234!" hashé bcrypt)
+-- Utilisateurs (mots de passe : Admin@1234 / Employe@1234 / User@1234, hashés bcrypt)
 INSERT INTO utilisateur (id, email, password, nom, prenom, telephone, adresse, actif, role_id, created_at) VALUES
-    (1, 'jose@vitegourmand.fr',   '$2y$12$LHmVKFNMbFnbpRVBmNRbOeabrH3kG1QK6oxrRcyB7K9XFVJ4XGQC2', 'Vite',   'José',   '05 56 00 00 01', '1 rue du Chef, 33000 Bordeaux',          1, 1, NOW()),
-    (2, 'sophie@vitegourmand.fr', '$2y$12$LHmVKFNMbFnbpRVBmNRbOeabrH3kG1QK6oxrRcyB7K9XFVJ4XGQC2', 'Lambert','Sophie', '05 56 00 00 02', NULL,                                     1, 2, NOW()),
-    (3, 'marc@vitegourmand.fr',   '$2y$12$LHmVKFNMbFnbpRVBmNRbOeabrH3kG1QK6oxrRcyB7K9XFVJ4XGQC2', 'Petit',  'Marc',   '05 56 00 00 03', NULL,                                     0, 2, NOW()),
-    (4, 'marie.dupont@email.com', '$2y$12$LHmVKFNMbFnbpRVBmNRbOeabrH3kG1QK6oxrRcyB7K9XFVJ4XGQC2', 'Dupont', 'Marie',  '06 12 34 56 78', '12 rue des Fleurs, 33000 Bordeaux',      1, 3, NOW()),
-    (5, 'jean.martin@email.com',  '$2y$12$LHmVKFNMbFnbpRVBmNRbOeabrH3kG1QK6oxrRcyB7K9XFVJ4XGQC2', 'Martin', 'Jean',   '07 98 76 54 32', '8 allée des Roses, 33200 Bordeaux',      1, 3, NOW()),
-    (6, 'camille.d@email.com',    '$2y$12$LHmVKFNMbFnbpRVBmNRbOeabrH3kG1QK6oxrRcyB7K9XFVJ4XGQC2', 'Dubois', 'Camille','06 55 44 33 22', '3 place de la Victoire, 33000 Bordeaux', 1, 3, NOW());
+    (1, 'admin@vitegourmand.fr',   '$2y$12$5S6p7slYIYUDeyKNjA1oz.gK6nG/1aU/MbsG3flUaiMOXQ5UrS6WC', 'Vite',   'José',   '05 56 00 00 01', '1 rue du Chef, 33000 Bordeaux',          1, 1, NOW()),
+    (2, 'employe@vitegourmand.fr', '$2y$12$20pu06UXm8x2Vep2XjdSZOHn8MbB0//W/nsrf3RYADtnXyCr2J0Py', 'Lambert','Sophie', '05 56 00 00 02', NULL,                                     1, 2, NOW()),
+    (3, 'marc@vitegourmand.fr',    '$2y$12$20pu06UXm8x2Vep2XjdSZOHn8MbB0//W/nsrf3RYADtnXyCr2J0Py', 'Petit',  'Marc',   '05 56 00 00 03', NULL,                                     0, 2, NOW()),
+    (4, 'marie.dupont@email.com', '$2y$12$6GtDvXpGIaopSTZ64.S7geaLPLoOHUR6YGEizuzr0Twe/RDLKA.w6', 'Dupont', 'Marie',  '06 12 34 56 78', '12 rue des Fleurs, 33000 Bordeaux',      1, 3, NOW()),
+    (5, 'jean.martin@email.com',  '$2y$12$6GtDvXpGIaopSTZ64.S7geaLPLoOHUR6YGEizuzr0Twe/RDLKA.w6', 'Martin', 'Jean',   '07 98 76 54 32', '8 allée des Roses, 33200 Bordeaux',      1, 3, NOW()),
+    (6, 'camille.d@email.com',    '$2y$12$6GtDvXpGIaopSTZ64.S7geaLPLoOHUR6YGEizuzr0Twe/RDLKA.w6', 'Dubois', 'Camille','06 55 44 33 22', '3 place de la Victoire, 33000 Bordeaux', 1, 3, NOW());
 
 -- Menus
 INSERT INTO menu (id, titre, nombre_personne_minimum, prix_par_personne, description, conditions, quantite_restante, theme_id, regime_id, actif, created_at) VALUES

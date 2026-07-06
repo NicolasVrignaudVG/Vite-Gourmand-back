@@ -12,7 +12,7 @@ DROP DATABASE IF EXISTS vite_gourmand;
 CREATE DATABASE vite_gourmand
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
-USE b2eahw1nom6ijfhppqqj;
+USE vite_gourmand;
 
 -- ─────────────────────────────────────────
 -- TABLE : role
@@ -46,14 +46,14 @@ CREATE TABLE utilisateur (
     CONSTRAINT fk_util_role FOREIGN KEY (role_id) REFERENCES role(role_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Mot de passe haché = "Admin1234!" pour admin, "Employe123!" pour employés, "User1234!" pour users
+-- Mot de passe haché = "Admin@1234" pour admin, "Employe@1234" pour employés, "User@1234" pour clients
 INSERT INTO utilisateur (email, password, nom, prenom, telephone, adresse, actif, role_id) VALUES
-    ('jose@vitegourmand.fr',    '$2y$12$hashAdminJose',    'Vite',    'José',   '05 56 00 00 01', '1 rue du Chef, 33000 Bordeaux', 1, 1),
-    ('sophie@vitegourmand.fr',  '$2y$12$hashEmploSophie',  'Lambert', 'Sophie', '05 56 00 00 02', NULL,                            1, 2),
-    ('marc@vitegourmand.fr',    '$2y$12$hashEmploMarc',    'Petit',   'Marc',   '05 56 00 00 03', NULL,                            0, 2),
-    ('marie.dupont@email.com',  '$2y$12$hashUserMarie',    'Dupont',  'Marie',  '06 12 34 56 78', '12 rue des Fleurs, 33000 Bordeaux', 1, 3),
-    ('jean.martin@email.com',   '$2y$12$hashUserJean',     'Martin',  'Jean',   '07 98 76 54 32', '8 allée des Roses, 33200 Bordeaux', 1, 3),
-    ('camille.d@email.com',     '$2y$12$hashUserCamille',  'Dubois',  'Camille','06 55 44 33 22', '3 place de la Victoire, 33000 Bordeaux', 1, 3);
+    ('admin@vitegourmand.fr',   '$2y$12$5S6p7slYIYUDeyKNjA1oz.gK6nG/1aU/MbsG3flUaiMOXQ5UrS6WC', 'Vite',    'José',   '05 56 00 00 01', '1 rue du Chef, 33000 Bordeaux', 1, 1),
+    ('employe@vitegourmand.fr', '$2y$12$20pu06UXm8x2Vep2XjdSZOHn8MbB0//W/nsrf3RYADtnXyCr2J0Py', 'Lambert', 'Sophie', '05 56 00 00 02', NULL,                            1, 2),
+    ('marc@vitegourmand.fr',    '$2y$12$20pu06UXm8x2Vep2XjdSZOHn8MbB0//W/nsrf3RYADtnXyCr2J0Py', 'Petit',   'Marc',   '05 56 00 00 03', NULL,                            0, 2),
+    ('marie.dupont@email.com',  '$2y$12$6GtDvXpGIaopSTZ64.S7geaLPLoOHUR6YGEizuzr0Twe/RDLKA.w6', 'Dupont',  'Marie',  '06 12 34 56 78', '12 rue des Fleurs, 33000 Bordeaux', 1, 3),
+    ('jean.martin@email.com',   '$2y$12$6GtDvXpGIaopSTZ64.S7geaLPLoOHUR6YGEizuzr0Twe/RDLKA.w6', 'Martin',  'Jean',   '07 98 76 54 32', '8 allée des Roses, 33200 Bordeaux', 1, 3),
+    ('camille.d@email.com',     '$2y$12$6GtDvXpGIaopSTZ64.S7geaLPLoOHUR6YGEizuzr0Twe/RDLKA.w6', 'Dubois',  'Camille','06 55 44 33 22', '3 place de la Victoire, 33000 Bordeaux', 1, 3);
 
 -- ─────────────────────────────────────────
 -- TABLE : theme
@@ -270,7 +270,7 @@ CREATE TABLE commande (
     prix_livraison   DOUBLE         NOT NULL DEFAULT 0.00,
     prix_total       DOUBLE         NOT NULL,
     remise           DOUBLE         NOT NULL DEFAULT 0.00,
-    statut           ENUM('en_attente','accepte','preparation','livraison','livre','retour_materiel','terminee','annulee')
+    statut           ENUM('en_attente','accepte','en_preparation','en_livraison','livre','retour_materiel','terminee','annulee')
                                     NOT NULL DEFAULT 'en_attente',
     motif_annulation TEXT           DEFAULT NULL,
     mode_contact     VARCHAR(50)    DEFAULT NULL,
@@ -303,11 +303,11 @@ CREATE TABLE suivi_commande (
 INSERT INTO suivi_commande (commande_id, statut, commentaire, created_at) VALUES
     (2, 'en_attente',  'Commande reçue',         '2025-04-01 10:12:00'),
     (2, 'accepte',     'Validée par l\'équipe',   '2025-04-01 14:30:00'),
-    (2, 'preparation', 'En préparation cuisine',  '2025-04-05 08:00:00'),
+    (2, 'en_preparation', 'En préparation cuisine',  '2025-04-05 08:00:00'),
     (3, 'en_attente',  'Commande reçue',          '2025-02-12 10:00:00'),
     (3, 'accepte',     'Validée',                 '2025-02-12 14:00:00'),
-    (3, 'preparation', 'En préparation',          '2025-02-14 09:00:00'),
-    (3, 'livraison',   'En cours de livraison',   '2025-02-14 18:30:00'),
+    (3, 'en_preparation', 'En préparation',          '2025-02-14 09:00:00'),
+    (3, 'en_livraison',   'En cours de livraison',   '2025-02-14 18:30:00'),
     (3, 'livre',       'Livraison effectuée',     '2025-02-14 19:45:00'),
     (3, 'terminee',    'Commande terminée',        '2025-02-14 20:00:00');
 

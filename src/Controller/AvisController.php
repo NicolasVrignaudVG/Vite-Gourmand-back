@@ -143,23 +143,10 @@ class AvisController extends AbstractController
         return $this->json(['message' => 'Avis supprimé.']);
     }
 
-    // PATCH /api/avis/{id} — modifier note/description (admin)
-    #[Route('/{id}', methods: ['PATCH'], requirements: ['id' => '\d+'])]
-    #[IsGranted('ROLE_EMPLOYE')]
-    public function update(Avis $avis, Request $request): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
-        if (isset($data['note'])) {
-            $note = (int) $data['note'];
-            if ($note < 1 || $note > 5) return $this->json(['error' => 'Note invalide.'], 400);
-            $avis->setNote($note);
-        }
-        if (array_key_exists('description', $data)) {
-            $avis->setDescription(strip_tags($data['description'] ?? ''));
-        }
-        $this->em->flush();
-        return $this->json(['message' => 'Avis modifié.']);
-    }
+    // NOTE : la modification du contenu d'un avis (note/description) a été
+    // volontairement retirée. Un modérateur peut valider, refuser ou supprimer
+    // un avis, mais pas réécrire les mots d'un client — cela préserve
+    // l'authenticité et l'intégrité des avis publiés.
 
     // PATCH /api/avis/{id}/valider — employé valide un avis
     #[Route('/{id}/valider', methods: ['PATCH'], requirements: ['id' => '\d+'])]

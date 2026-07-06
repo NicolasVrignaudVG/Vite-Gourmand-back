@@ -16,8 +16,8 @@ class Commande
     public const STATUTS = [
         'en_attente',
         'accepte',
-        'preparation',
-        'livraison',
+        'en_preparation',
+        'en_livraison',
         'livre',
         'retour_materiel',
         'terminee',

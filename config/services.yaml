@@ -40,3 +40,19 @@ services:
             $loginLimiter: '@limiter.login_limiter'
         tags:
             - { name: kernel.event_subscriber }
+
+    # Injection de l'environnement (dev/prod) dans l'ExceptionListener :
+    # permet d'afficher les détails d'erreur (file/line) uniquement en dev,
+    # et un message générique en production (pas de fuite d'informations).
+    App\EventListener\ExceptionListener:
+        arguments:
+            $environment: '%kernel.environment%'
+
+    # Request matcher : la CSP stricte s'applique partout SAUF sur /api/doc
+    # (la page Swagger UI charge un script inline non couvert par la CSP stricte).
+    # La regex négative "^/(?!api/doc)" matche toutes les URLs sauf celles
+    # commençant par /api/doc, qui échappent donc à la CSP.
+    nelmio_security.csp_request_matcher:
+        class: Symfony\Component\HttpFoundation\RequestMatcher\PathRequestMatcher
+        arguments:
+            $regexp: '^/(?!api/doc)'

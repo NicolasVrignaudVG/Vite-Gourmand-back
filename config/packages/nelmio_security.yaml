@@ -26,6 +26,12 @@ nelmio_security:
 
     csp:
         enabled: true
+        # La CSP stricte ci-dessous s'applique partout SAUF sur /api/doc,
+        # grâce au request_matcher défini dans services.yaml.
+        # La page Swagger UI (documentation technique) échappe ainsi à la CSP,
+        # ce qui permet à son script inline de s'exécuter, sans affaiblir
+        # la sécurité du reste de l'application.
+        request_matcher: 'nelmio_security.csp_request_matcher'
         hosts: []
         content_types: []
         enforce:

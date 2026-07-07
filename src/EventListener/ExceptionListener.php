@@ -11,6 +11,10 @@ use Symfony\Component\HttpKernel\KernelEvents;
 #[AsEventListener(event: KernelEvents::EXCEPTION)]
 class ExceptionListener
 {
+    public function __construct(
+        private string $environment,
+    ) {}
+
     public function __invoke(ExceptionEvent $event): void
     {
         $request = $event->getRequest();
@@ -24,15 +28,26 @@ class ExceptionListener
             ? $exception->getStatusCode()
             : 500;
 
-        // Afficher le message complet pour débugger
-        $response = new JsonResponse([
-            'error'   => $exception->getMessage(),
-            'code'    => $statusCode,
-            'file'    => $exception->getFile(),
-            'line'    => $exception->getLine(),
-        ], $statusCode);
+        // En production : message générique pour les erreurs serveur, afin de
+        // ne pas exposer d'informations internes (chemins, structure du code).
+        // En dev : détails complets pour faciliter le débogage.
+        if ($this->environment === 'dev') {
+            $payload = [
+                'error' => $exception->getMessage(),
+                'code'  => $statusCode,
+                'file'  => $exception->getFile(),
+                'line'  => $exception->getLine(),
+            ];
+        } else {
+            $payload = [
+                'error' => $statusCode >= 500
+                    ? 'Une erreur interne est survenue.'
+                    : $exception->getMessage(),
+                'code'  => $statusCode,
+            ];
+        }
 
-        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response = new JsonResponse($payload, $statusCode);
         $event->setResponse($response);
     }
 }

@@ -126,7 +126,6 @@ Documentation Swagger disponible sur `https://127.0.0.1:8000/api/doc`.
 |---|---|---|
 | Administrateur | admin@vitegourmand.fr | Admin@1234 |
 | Employé | employe@vitegourmand.fr | Employe@1234 |
-| Utilisateur | marie.dupont@email.com | User@1234 |
 
 ## 🌐 En production
 

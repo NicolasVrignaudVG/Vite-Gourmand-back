@@ -35,7 +35,7 @@ class MenuController extends AbstractController
             new OA\Parameter(name: 'prix_min',      in: 'query', schema: new OA\Schema(type: 'number')),
             new OA\Parameter(name: 'theme',         in: 'query', schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'regime',        in: 'query', schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'nb_personnes',  in: 'query', schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'personnes_min',  in: 'query', schema: new OA\Schema(type: 'integer')),
         ],
         responses: [new OA\Response(response: 200, description: 'Liste des menus actifs')])]
     #[Route('', methods: ['GET'])]

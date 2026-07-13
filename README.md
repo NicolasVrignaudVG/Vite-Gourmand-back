@@ -16,6 +16,7 @@ Le frontend (SPA vanilla JS) associé se trouve dans le dépôt [Vite-Gourmand](
 | Authentification | JWT en cookie HttpOnly + refresh token avec rotation |
 | Hashage mots de passe | bcrypt (cost 12) |
 | Documentation API | Swagger / OpenAPI (NelmioApiDocBundle) — route `/api/doc` |
+| Tests | PHPUnit (unitaires et fonctionnels) — fixtures Doctrine + Faker |
 | Mails transactionnels | Brevo API |
 | Calcul livraison | OpenRouteService API |
 | Déploiement | Render (Docker) |
@@ -120,6 +121,58 @@ L'API est accessible sur `https://127.0.0.1:8000` (ou le port affiché dans le t
 
 Documentation Swagger disponible sur `https://127.0.0.1:8000/api/doc`.
 
+## 🧪 Tests
+
+Le projet inclut des tests unitaires et fonctionnels (PHPUnit).
+
+### 1. Configurer la base de test
+
+Renseignez une `DATABASE_URL` dédiée dans `.env.test` (base distincte de celle de développement) :
+
+```
+DATABASE_URL="mysql://root:@127.0.0.1:3306/vite_gourmand_test?serverVersion=8.0&charset=utf8mb4"
+```
+
+Créez ensuite le schéma et chargez les données de test :
+
+```bash
+php bin/console --env=test doctrine:database:create
+php bin/console --env=test doctrine:schema:create
+php bin/console --env=test doctrine:fixtures:load --no-interaction
+```
+
+### 2. Lancer les tests
+
+```bash
+php bin/phpunit
+```
+
+### 3. Organisation des tests
+
+| Dossier | Type | Contenu |
+|---|---|---|
+| `tests/Entity/` | Unitaires | Logique métier isolée — calcul du prix et de la remise (`Menu::calculerPrix`) |
+| `tests/Controller/` | Fonctionnels | Routes de l'API — accès public, contrôle des rôles, filtres de menus |
+
+Les tests fonctionnels vérifient notamment que les routes protégées (création de menu, par exemple) refusent bien les requêtes non authentifiées, et que les filtres de la liste des menus renvoient les bons résultats.
+
+### 4. Jeux de données (fixtures)
+
+Deux jeux de fixtures cohabitent, avec des usages distincts :
+
+| Fixture | Groupe | Usage |
+|---|---|---|
+| `AppFixtures` | — | Données **déterministes** (menus, thèmes, régimes, plats) sur lesquelles s'appuient les assertions des tests |
+| `FakerFixtures` | `faker` | Données **aléatoires réalistes** (utilisateurs, messages de contact) pour peupler une base de développement |
+
+Pour ajouter les données de volume en développement, sans écraser les données existantes :
+
+```bash
+php bin/console doctrine:fixtures:load --group=faker --append
+```
+
+> **Note** : les données générées par Faker changent à chaque exécution. Elles ne servent donc pas de base aux assertions des tests automatisés, qui reposent exclusivement sur `AppFixtures`.
+
 ## 👤 Comptes de test
 
 | Rôle | Email | Mot de passe |
@@ -143,7 +196,11 @@ Vite-Gourmand-back/
 │   ├── Controller/     # Routes API REST (annotées OpenAPI)
 │   ├── Entity/         # Entités Doctrine
 │   ├── Repository/     # Requêtes BDD
-│   └── Service/        # Services métier (CommandeService, MailerService, DeliveryService, MongoService)
+│   ├── Service/        # Services métier (CommandeService, MailerService, DeliveryService, MongoService)
+│   └── DataFixtures/   # Jeux de données (AppFixtures, FakerFixtures)
+├── tests/
+│   ├── Entity/         # Tests unitaires (logique métier)
+│   └── Controller/     # Tests fonctionnels (routes API)
 ├── config/             # Configuration Symfony
 │   └── jwt/            # Clés JWT (non versionnées)
 ├── migrations/         # Migrations Doctrine

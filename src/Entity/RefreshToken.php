@@ -30,7 +30,7 @@ class RefreshToken
     #[ORM\Column(nullable: true)]
     private ?bool $revoked = false;
 
-    public function __construct(Utilisateur $utilisateur, string $ip = null)
+    public function __construct(Utilisateur $utilisateur, ?string $ip = null)
     {
         $this->token       = bin2hex(random_bytes(64));
         $this->utilisateur = $utilisateur;

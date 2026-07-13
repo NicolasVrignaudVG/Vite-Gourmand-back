@@ -18,6 +18,7 @@ class UploadController extends AbstractController
     private const ALLOWED_MIMES = [
         'image/jpeg',
         'image/png',
+        'image/webp',
     ];
 
     /** Taille maximale : 5 Mo. */
@@ -46,7 +47,7 @@ class UploadController extends AbstractController
         // et non dans l'en-tête Content-Type envoyé par le client, qui est falsifiable).
         if (!in_array($file->getMimeType(), self::ALLOWED_MIMES, true)) {
             return $this->json(
-                ['error' => 'Format non autorisé. Formats acceptés : JPG, PNG.'],
+                ['error' => 'Format non autorisé. Formats acceptés : JPG, PNG, WebP.'],
                 400
             );
         }

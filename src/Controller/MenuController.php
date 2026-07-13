@@ -162,6 +162,7 @@ class MenuController extends AbstractController
         return array_merge($this->formatMenu($m), [
             'conditions' => $m->getConditions(),
             'images'     => array_map(fn($img) => [
+                'id'         => $img->getId(),
                 'url'        => $img->getUrl(),
                 'alt'        => $img->getAlt(),
                 'principale' => $img->isPrincipale(),

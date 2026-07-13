@@ -1,0 +1,37 @@
+# ═══════════════════════════════════════════════════════════
+# Sécurité — dossier d'upload d'images
+#
+# Ce dossier ne doit contenir QUE des fichiers statiques (images).
+# Aucun script ne doit jamais y être exécuté, même si un fichier
+# malveillant parvenait à y être déposé (défense en profondeur).
+# ═══════════════════════════════════════════════════════════
+
+# --- Désactive l'exécution PHP (mod_php) ---
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# --- Empêche le handler PHP de traiter les fichiers (PHP-FPM / mod_proxy_fcgi) ---
+<IfModule mod_mime.c>
+    RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phar .pht
+    RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phar .pht
+</IfModule>
+
+# --- Bloque tout accès aux fichiers exécutables (ceinture + bretelles) ---
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|php8|phar|pht|cgi|pl|py|sh|asp|aspx|jsp)$">
+    Require all denied
+</FilesMatch>
+
+# --- N'autorise que les extensions d'images légitimes ---
+<FilesMatch "\.(jpe?g|png|webp|gif|svg)$">
+    Require all granted
+</FilesMatch>
+
+# --- Désactive le listing du répertoire ---
+Options -Indexes -ExecCGI

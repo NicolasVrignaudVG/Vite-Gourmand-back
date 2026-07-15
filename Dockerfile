@@ -17,6 +17,11 @@ RUN printf "APP_ENV=prod\nAPP_SECRET=\${APP_SECRET}\nDATABASE_URL=\${DATABASE_UR
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs --no-scripts
 
+# Installe les assets des bundles (Swagger UI de NelmioApiDocBundle, etc.)
+# dans public/assets/. Nécessaire car composer install est lancé avec --no-scripts,
+# ce qui empêche l'installation automatique des assets.
+RUN php bin/console assets:install public --no-interaction || true
+
 RUN mkdir -p var/cache/prod var/log config/jwt && chmod -R 775 var/ && chown -R www-data:www-data var/
 
 # Configuration PHP pour l'upload de fichiers

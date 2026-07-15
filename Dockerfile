@@ -13,14 +13,14 @@ WORKDIR /var/www/html
 
 COPY . .
 
-RUN printf "APP_ENV=prod\nAPP_SECRET=\${APP_SECRET}\nDATABASE_URL=\${DATABASE_URL}\nJWT_SECRET_KEY=/etc/secrets/private\nJWT_PUBLIC_KEY=/etc/secrets/public\nJWT_PASSPHRASE=\${JWT_PASSPHRASE}\nMESSENGER_TRANSPORT_DSN=sync://\n" > .env
+RUN printf "APP_ENV=prod\nAPP_SECRET=\${APP_SECRET}\nDATABASE_URL=\${DATABASE_URL}\nJWT_SECRET_KEY=/etc/secrets/private\nJWT_PUBLIC_KEY=/etc/secrets/public\nJWT_PASSPHRASE=\${JWT_PASSPHRASE}\nMESSENGER_TRANSPORT_DSN=sync://\nMONGO_URI=mongodb://localhost:27017\nMONGO_DB=build\nMAILER_DSN=null://null\nMAILER_SENDER_EMAIL=build@example.com\nMAILER_SENDER_NAME=Build\nORS_API_KEY=build\nCORS_ALLOW_ORIGIN=^https?://localhost$\n" > .env
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs --no-scripts
 
 # Installe les assets des bundles (Swagger UI de NelmioApiDocBundle, etc.)
 # dans public/assets/. Nécessaire car composer install est lancé avec --no-scripts,
 # ce qui empêche l'installation automatique des assets.
-RUN php bin/console assets:install public --no-interaction || true
+RUN php bin/console assets:install public --no-interaction
 
 RUN mkdir -p var/cache/prod var/log config/jwt && chmod -R 775 var/ && chown -R www-data:www-data var/
 

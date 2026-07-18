@@ -22,6 +22,10 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-pl
 # ce qui empêche l'installation automatique des assets.
 RUN php bin/console assets:install public --no-interaction
 
+# Compile les assets versionnés d'AssetMapper (style-XXXX.css, swagger-ui-XXXX.js, ...)
+# que la page /api/doc référence. assets:install seul ne les génère pas.
+RUN php bin/console asset-map:compile --no-interaction
+
 RUN mkdir -p var/cache/prod var/log config/jwt && chmod -R 775 var/ && chown -R www-data:www-data var/
 
 # Configuration PHP pour l'upload de fichiers

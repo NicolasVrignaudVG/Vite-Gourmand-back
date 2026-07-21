@@ -54,6 +54,12 @@ RUN echo '<VirtualHost *:10000>\n\
     </Directory>\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
+# HSTS — force l'usage de HTTPS côté navigateur (Strict-Transport-Security)
+RUN a2enmod headers && \
+    printf 'Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"\n' \
+      > /etc/apache2/conf-available/hsts.conf && \
+    a2enconf hsts
+
 RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 10000

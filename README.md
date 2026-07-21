@@ -22,6 +22,10 @@ Le frontend (SPA vanilla JS) associé se trouve dans le dépôt [Vite-Gourmand](
 | Déploiement | Render (Docker) |
 | Base de données production | Clever Cloud MySQL |
 
+## 📚 Documentation
+
+Les livrables documentaires du projet (documentation technique, déploiement, gestion de projet, manuel d'utilisation, charte graphique) sont regroupés dans le dossier [`docs/` du dépôt front-end](https://github.com/NicolasVrignaudVG/Vite-Gourmand/tree/main/docu).
+
 ## ⚙️ Prérequis
 
 - PHP >= 8.4 avec les extensions : `pdo_mysql`, `mongodb`, `intl`, `ctype`, `iconv`, `fileinfo`, `zip`
@@ -179,6 +183,7 @@ php bin/console doctrine:fixtures:load --group=faker --append
 |---|---|---|
 | Administrateur | admin@vitegourmand.fr | Admin@1234 |
 | Employé | employe@vitegourmand.fr | Employe@1234 |
+| Client | marie.dupont24@email.com | Visiteur@12345 |
 
 ## 🌐 En production
 

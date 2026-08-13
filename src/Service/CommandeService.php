@@ -12,6 +12,7 @@ use App\Entity\Utilisateur;
 use App\Repository\MenuRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use MongoDB\BSON\UTCDateTime;
+use Psr\Log\LoggerInterface;
 
 /**
  * Centralise la logique métier de création et de mise à jour des commandes,
@@ -27,6 +28,7 @@ class CommandeService
         private MailerService          $mailer,
         private MongoService           $mongo,
         private DeliveryService        $delivery,
+        private LoggerInterface        $logger,
     ) {}
 
     /**
@@ -43,26 +45,30 @@ class CommandeService
             throw new \InvalidArgumentException('Au moins un menu est requis.');
         }
 
-        $livraisonData = $this->delivery->calculerFrais(
-            $data['adresse_livraison'] ?? '',
-            $data['ville_livraison']   ?? '',
-            $data['cp_livraison']      ?? ''
-        );
-        $prixLivraison = $livraisonData['frais'];
-
         $commande = new Commande();
         $commande->setUtilisateur($user);
         $commande->setDatePrestation(new \DateTime($data['date_prestation']));
+
+        [$prixMenuTotal, $premierMenu] = $this->ajouterMenusEtPlats($commande, $menusCommandes);
+
+        if (!$premierMenu) {
+            throw new \InvalidArgumentException(
+                'Aucun des menus demandés n\'est disponible à la commande.'
+        );
+        }
+        $commande->setMenu($premierMenu);
+
+        $livraisonData = $this->delivery->calculerFrais(
+        $data['adresse_livraison'] ?? '',
+        $data['ville_livraison']   ?? '',
+        $data['cp_livraison']      ?? ''
+        );
+        $prixLivraison = $livraisonData['frais'];
+
         $commande->setAdresseLivraison($data['adresse_livraison'] ?? '');
         $commande->setVilleLivraison($data['ville_livraison'] ?? '');
         $commande->setCpLivraison($data['cp_livraison'] ?? '');
         $commande->setPrixLivraison($prixLivraison);
-
-        [$prixMenuTotal, $premierMenu] = $this->ajouterMenusEtPlats($commande, $menusCommandes);
-
-        if ($premierMenu) {
-            $commande->setMenu($premierMenu);
-        }
         $commande->setNombrePersonnes((int) ($data['nombre_personnes'] ?? 1));
         $commande->setPrixMenu($prixMenuTotal);
         $commande->setPrixTotal($prixMenuTotal + $prixLivraison);
@@ -73,14 +79,26 @@ class CommandeService
         $this->em->persist($commande);
         $this->em->flush();
 
-        if ($premierMenu) {
+        try {
             $this->synchroniserMongo($commande, $premierMenu);
+        } catch (\Throwable $e) {
+            $this->logger->error('Synchronisation MongoDB échouée', [
+                'commande' => $commande->getNumeroCommande(),
+                'erreur'   => $e->getMessage(),
+            ]);
         }
 
-        $this->mailer->sendConfirmationCommande($commande);
+        try {
+    $this->mailer->sendConfirmationCommande($commande);
+        } catch (\Throwable $e) {
+            $this->logger->error('Envoi du mail de confirmation échoué', [
+                'commande' => $commande->getNumeroCommande(),
+                'erreur'   => $e->getMessage(),
+         ]);
+        }
 
         return $commande;
-    }
+        }
 
     /**
      * Modifie une commande existante (adresse, date, nombre de personnes)
@@ -123,14 +141,21 @@ class CommandeService
 
         $this->em->flush();
 
-        $this->mongo->upsertCommande([
-            'commande_id'      => $commande->getId(),
-            'prix_total'       => $commande->getPrixTotal(),
-            'nombre_personnes' => $commande->getNombrePersonnes(),
-            'date_prestation'  => new UTCDateTime(
-                $commande->getDatePrestation()->getTimestamp() * 1000
-            ),
-        ]);
+        try {
+            $this->mongo->upsertCommande([
+                'commande_id'      => $commande->getId(),
+                'prix_total'       => $commande->getPrixTotal(),
+                'nombre_personnes' => $commande->getNombrePersonnes(),
+                'date_prestation'  => new UTCDateTime(
+                    $commande->getDatePrestation()->getTimestamp() * 1000
+                ),
+            ]);
+        } catch (\Throwable $e) {
+            $this->logger->error('Synchronisation MongoDB échouée', [
+                'commande' => $commande->getNumeroCommande(),
+                'erreur'   => $e->getMessage(),
+            ]);
+        }
 
         return $commande;
     }
@@ -141,7 +166,13 @@ class CommandeService
     public function annulerCommande(Commande $commande): void
     {
         $commande->setStatut('annulee');
-        $commande->getMenu()->setQuantiteRestante($commande->getMenu()->getQuantiteRestante() + 1);
+
+        foreach ($commande->getCommandeMenus() as $cm) {
+            $menu = $cm->getMenu();
+            if ($menu) {
+                $menu->setQuantiteRestante($menu->getQuantiteRestante() + 1);
+            }
+        }
 
         $suivi = new SuiviCommande();
         $suivi->setCommande($commande);
@@ -150,11 +181,19 @@ class CommandeService
         $this->em->persist($suivi);
         $this->em->flush();
 
-        $this->mongo->upsertCommande([
-            'commande_id' => $commande->getId(),
-            'statut'      => 'annulee',
-        ]);
+          try {
+            $this->mongo->upsertCommande([
+                'commande_id' => $commande->getId(),
+                'statut'      => 'annulee',
+            ]);
+        } catch (\Throwable $e) {
+            $this->logger->error('Synchronisation MongoDB échouée', [
+                'commande' => $commande->getNumeroCommande(),
+                'erreur'   => $e->getMessage(),
+            ]);
+        }
     }
+    
 
     /**
      * Met à jour le statut d'une commande (action employé), gère le motif
@@ -175,19 +214,34 @@ class CommandeService
         $suivi->setCommentaire($commentaire);
         $this->em->persist($suivi);
 
-        if ($statut === 'retour_materiel') {
-            $this->mailer->sendRetourMateriel($commande);
-        }
-        if ($statut === 'terminee') {
-            $this->mailer->sendCommandeTerminee($commande);
-        }
-
         $this->em->flush();
 
-        $this->mongo->upsertCommande([
-            'commande_id' => $commande->getId(),
-            'statut'      => $statut,
-        ]);
+        try {
+            if ($statut === 'retour_materiel') {
+                $this->mailer->sendRetourMateriel($commande);
+            }
+            if ($statut === 'terminee') {
+                $this->mailer->sendCommandeTerminee($commande);
+            }
+        } catch (\Throwable $e) {
+            $this->logger->error('Envoi du mail de changement de statut échoué', [
+                'commande' => $commande->getNumeroCommande(),
+                'statut'   => $statut,
+                'erreur'   => $e->getMessage(),
+            ]);
+        }
+
+        try {
+            $this->mongo->upsertCommande([
+                'commande_id' => $commande->getId(),
+                'statut'      => $statut,
+            ]);
+        } catch (\Throwable $e) {
+            $this->logger->error('Synchronisation MongoDB échouée', [
+                'commande' => $commande->getNumeroCommande(),
+                'erreur'   => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

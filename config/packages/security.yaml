@@ -24,7 +24,7 @@ security:
                 password_path:           password
                 success_handler:         App\Security\JwtCookieSuccessHandler
                 failure_handler:         lexik_jwt_authentication.handler.authentication_failure
-
+            
         api:
             pattern:   ^/api
             stateless: true
@@ -57,6 +57,9 @@ security:
 
         # ── Admin uniquement ───────────────────────────────────
         - { path: ^/api/admin,                roles: ROLE_ADMIN }
+
+        # ── Repli : toute route /api non listée exige une authentification ──
+        - { path: ^/api,                      roles: IS_AUTHENTICATED_FULLY }
 
     role_hierarchy:
         ROLE_EMPLOYE: ROLE_USER

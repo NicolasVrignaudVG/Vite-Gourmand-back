@@ -32,7 +32,7 @@ class CommandeController extends AbstractController
     public function index(): JsonResponse
     {
         $user      = $this->getUser();
-        $commandes = $this->cmdRepo->findBy(['utilisateur' => $user], ['createdAt' => 'DESC']);
+        $commandes = $this->cmdRepo->findByUtilisateurAvecDetails($user);
         return $this->json(array_map(fn($c) => $this->formatCommande($c), $commandes));
     }
 

@@ -122,7 +122,7 @@ class Commande
         $this->commandeMenus  = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTime();
-        $this->numeroCommande = 'VG-' . strtoupper(substr(uniqid(), -6));
+        $this->numeroCommande = 'VG-' . strtoupper(bin2hex(random_bytes(4)));
     }
 
     public function canBeModified(): bool

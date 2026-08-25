@@ -6,6 +6,7 @@ use App\Entity\RefreshToken;
 use App\Entity\Role;
 use App\Entity\Utilisateur;
 use App\Service\MailerService;
+use App\Validator\MotDePasseValide;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -66,9 +67,10 @@ class AuthController extends AbstractController
         $data     = json_decode($request->getContent(), true) ?? [];
         $password = $data['password'] ?? '';
 
-        // ── Validation mot de passe (10 car., maj, min, chiffre, spécial) ──
-        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/', $password)) {
-            return $this->json(['error' => 'Le mot de passe doit contenir au minimum 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'], 400);
+        // ── Validation mot de passe (règle centralisée : App\Validator\MotDePasseValide) ──
+        $violations = $this->validator->validate($password, new MotDePasseValide());
+        if (count($violations) > 0) {
+            return $this->json(['error' => $violations->get(0)->getMessage()], 400);
         }
 
         // ── Vérification e-mail unique ───────────────────────
@@ -197,8 +199,9 @@ class AuthController extends AbstractController
 
         if (!$token || !$newPassword) return $this->json(['error' => 'Token et mot de passe requis.'], 400);
 
-        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/', $newPassword)) {
-            return $this->json(['error' => 'Le mot de passe doit contenir au minimum 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'], 400);
+        $violations = $this->validator->validate($newPassword, new MotDePasseValide());
+        if (count($violations) > 0) {
+            return $this->json(['error' => $violations->get(0)->getMessage()], 400);
         }
 
         $user = $this->em->getRepository(Utilisateur::class)->findOneBy(['resetToken' => $token]);
@@ -292,8 +295,9 @@ class AuthController extends AbstractController
         if (isset($data['pseudonyme'])) $user->setPseudonyme(strip_tags(trim($data['pseudonyme'])) ?: null);
 
         if (!empty($data['password'])) {
-            if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/', $data['password'])) {
-                return $this->json(['error' => 'Mot de passe invalide.'], 400);
+            $violations = $this->validator->validate($data['password'], new MotDePasseValide());
+            if (count($violations) > 0) {
+                return $this->json(['error' => $violations->get(0)->getMessage()], 400);
             }
             $user->setPassword($this->hasher->hashPassword($user, $data['password']));
         }

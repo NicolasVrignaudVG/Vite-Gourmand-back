@@ -5,9 +5,8 @@ namespace App\Controller;
 use App\Entity\Menu;
 use App\Entity\MenuImage;
 use App\Entity\Plat;
-use App\Entity\Theme;
-use App\Entity\Regime;
 use App\Repository\MenuRepository;
+use App\Service\MenuService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -26,6 +25,7 @@ class MenuController extends AbstractController
     public function __construct(
         private EntityManagerInterface $em,
         private MenuRepository         $menuRepo,
+        private MenuService            $menuService,
     ) {}
 
     // GET /api/menus
@@ -94,7 +94,7 @@ class MenuController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         $menu = new Menu();
-        $this->hydrateMenu($menu, $data);
+        $this->menuService->hydrateMenu($menu, $data);
         $this->em->persist($menu);
         $this->em->flush();
         return $this->json(['id' => $menu->getId(), 'message' => 'Menu créé.'], 201);
@@ -109,7 +109,7 @@ class MenuController extends AbstractController
     #[IsGranted('ROLE_EMPLOYE')]
     public function update(Menu $menu, Request $request): JsonResponse
     {
-        $this->hydrateMenu($menu, json_decode($request->getContent(), true));
+        $this->menuService->hydrateMenu($menu, json_decode($request->getContent(), true));
         $this->em->flush();
         return $this->json(['message' => 'Menu mis à jour.']);
     }
@@ -261,56 +261,5 @@ class MenuController extends AbstractController
         return $this->json(['message' => 'Image supprimée.']);
     }
 
-    private function hydrateMenu(Menu $menu, array $data): void
-    {
-        if (isset($data['titre']))                   $menu->setTitre($data['titre']);
-        if (isset($data['description']))             $menu->setDescription($data['description']);
-        if (isset($data['conditions']))              $menu->setConditions($data['conditions']);
-        if (isset($data['prix_par_personne']))       $menu->setPrixParPersonne((float) $data['prix_par_personne']);
-        if (isset($data['nombre_personne_minimum'])) $menu->setNombrePersonneMinimum((int) $data['nombre_personne_minimum']);
-        if (isset($data['quantite_restante']))       $menu->setQuantiteRestante((int) $data['quantite_restante']);
-
-        // Gestion thème
-        if (isset($data['theme']) && $data['theme']) {
-            $theme = $this->em->getRepository(Theme::class)->findOneBy(['libelle' => $data['theme']]);
-            if (!$theme) {
-                $theme = new Theme();
-                $theme->setLibelle($data['theme']);
-                $this->em->persist($theme);
-            }
-            $menu->setTheme($theme);
-        }
-
-        // Gestion régime
-        if (isset($data['regime']) && $data['regime']) {
-            $regime = $this->em->getRepository(Regime::class)->findOneBy(['libelle' => $data['regime']]);
-            if (!$regime) {
-                $regime = new Regime();
-                $regime->setLibelle($data['regime']);
-                $this->em->persist($regime);
-            }
-            $menu->setRegime($regime);
-        }
-
-        // Gestion image uploadée
-        if (!empty($data['image'])) {
-            $imagePrincipale = null;
-            foreach ($menu->getImages() as $img) {
-                if ($img->isPrincipale()) { $imagePrincipale = $img; break; }
-            }
-            if ($imagePrincipale) {
-                $imagePrincipale->setUrl($data['image']);
-            } else {
-                $newImg = new MenuImage();
-                $newImg->setUrl($data['image']);
-                $newImg->setAlt($data['titre'] ?? 'Image menu');
-                $newImg->setPrincipale(true);
-                $newImg->setMenu($menu);
-                $this->em->persist($newImg);
-            }
-        }
-
-        // Actif par défaut à la création
-        if (!$menu->getId()) $menu->setActif(true);
-    }
+    
 }

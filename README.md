@@ -185,6 +185,7 @@ php bin/phpunit
 |---|---|---|
 | `tests/Entity/` | Unitaires | Logique métier isolée : calcul du prix et de la remise (`Menu::calculerPrix`) |
 | `tests/Controller/` | Fonctionnels | Routes de l'API : accès public, contrôle des rôles, filtres de menus |
+| `tests/Validator/` | Unitaires | Contrainte de validation du mot de passe : cas valides et chaque critère manquant |
 
 Les tests fonctionnels vérifient notamment que les routes protégées (création de menu, par exemple) refusent bien les requêtes non authentifiées, et que les filtres de la liste des menus renvoient les bons résultats.
 
@@ -235,10 +236,12 @@ Vite-Gourmand-back/
 │   ├── Security/         # JwtCookieSuccessHandler : émission des cookies JWT et refresh
 │   ├── EventListener/    # ExceptionListener : réponses d'erreur JSON
 │   ├── EventSubscriber/  # LoginRateLimiterSubscriber : limitation des tentatives de connexion
+│   ├── Validator/        # MotDePasseValide : contrainte de robustesse des mots de passe
 │   └── DataFixtures/     # Jeux de données (AppFixtures, FakerFixtures)
 ├── tests/
 │   ├── Entity/           # Tests unitaires (logique métier)
-│   └── Controller/       # Tests fonctionnels (routes API)
+│   ├── Controller/       # Tests fonctionnels (routes API)
+│   └── Validator/        # Tests unitaires de la contrainte de mot de passe
 ├── config/               # Configuration Symfony
 │   └── jwt/              # Clés JWT (non versionnées)
 ├── migrations/           # Migrations Doctrine
@@ -268,6 +271,7 @@ Vite-Gourmand-back/
 ### Entrées et sorties
 
 - Validation des entrées côté serveur (Symfony Validator)
+- Politique de mot de passe centralisée dans une contrainte réutilisable (`App\Validator\MotDePasseValide`) : 10 caractères minimum, majuscule, minuscule, chiffre, caractère spécial. Appliquée à l'inscription, à la réinitialisation et à la modification du profil, et couverte par des tests unitaires
 - Statuts de commande validés contre `Commande::STATUTS` avant traitement
 - Références de commande générées via `random_bytes(4)` (aléa cryptographique)
 - Upload d'images : types MIME validés, taille limitée
@@ -295,6 +299,8 @@ main
     ├── feature/espace-employe
     └── feature/espace-admin
 ```
+
+Convention de nommage selon la nature du travail : `feature/*` pour les fonctionnalités, `fix/*` pour les correctifs, `security/*` pour le durcissement, `test/*` pour l'ajout de tests, `refactor/*` pour les refactorisations.
 
 ## 📄 Licence
 
